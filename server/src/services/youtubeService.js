@@ -116,26 +116,44 @@ export async function searchYouTube(query, limit = 24) {
   }
 }
 
-const TRENDING_POOLS = [
+const DEFAULT_TRENDING_POOLS = [
   { title: 'Aditya Rikhari & Anuv Jain Essentials', query: 'Aditya Rikhari Anuv Jain' },
   { title: 'Top Global Viral Chartbusters', query: 'popular hits music 2024' },
   { title: 'Indie Vibes & Acoustic Hits', query: 'Aditya Rikhari Prateek Kuhad Anuv Jain' },
   { title: 'Trending Bollywood Chartbusters', query: 'Arijit Singh Pritam Bollywood Hits' },
   { title: 'Global Pop & Billboard Top 50', query: 'billboard hot 100 music hits' },
   { title: 'Late Night Chill & Lo-Fi Beats', query: 'lofi chill beats study sleep' },
-  { title: 'High-Energy Punjabi Waves', query: 'Punjabi Top Hits AP Dhillon Karan Aujla' },
-  { title: 'Acoustic Soul & Melodies', query: 'acoustic songs unplugged hits' }
+  { title: 'High-Energy Punjabi Waves', query: 'Punjabi Top Hits AP Dhillon Karan Aujla' }
 ];
 
 /**
- * Get Dynamic Trending Mix that rotates on every refresh
+ * Get Dynamic Trending Mix customized according to search/listening history
  */
-export async function getYouTubeTrending(limit = 24) {
-  const selectedPool = TRENDING_POOLS[Math.floor(Math.random() * TRENDING_POOLS.length)];
-  const tracks = await searchYouTube(selectedPool.query, limit);
+export async function getYouTubeTrending(historyQuery = '', limit = 24) {
+  let queryToSearch = '';
+  let sectionTitle = '';
+
+  if (historyQuery && historyQuery.trim()) {
+    const hints = historyQuery.split(',').map(h => h.trim()).filter(Boolean);
+    if (hints.length > 0) {
+      // Pick a random artist/search from the user's history
+      const selectedHint = hints[Math.floor(Math.random() * hints.length)];
+      queryToSearch = `${selectedHint} top hits songs`;
+      sectionTitle = `Trending Hits based on "${selectedHint}"`;
+    }
+  }
+
+  // Fallback to rotating trending pools if no history or query
+  if (!queryToSearch) {
+    const selectedPool = DEFAULT_TRENDING_POOLS[Math.floor(Math.random() * DEFAULT_TRENDING_POOLS.length)];
+    queryToSearch = selectedPool.query;
+    sectionTitle = selectedPool.title;
+  }
+
+  const tracks = await searchYouTube(queryToSearch, limit);
 
   return {
-    sectionTitle: selectedPool.title,
+    sectionTitle,
     tracks
   };
 }

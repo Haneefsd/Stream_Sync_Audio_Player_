@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
+import { storageService } from '../services/storage';
 import TrackCard from './TrackCard';
 import TrackRow from './TrackRow';
-import { Search, LayoutGrid, List, Youtube } from 'lucide-react';
+import { Search, LayoutGrid, List } from 'lucide-react';
 
 export default function SearchView({ query }) {
   const { playTrack } = useAudioPlayer();
@@ -21,12 +22,13 @@ export default function SearchView({ query }) {
     const delayDebounce = setTimeout(async () => {
       setIsLoading(true);
       try {
+        storageService.addSearchHistory(query);
         const data = await apiService.search(query, 24);
         if (isMounted) {
           setResults(data);
         }
       } catch (err) {
-        console.error('YouTube search failed:', err);
+        console.error('Search failed:', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -51,10 +53,10 @@ export default function SearchView({ query }) {
       }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>
-            {query ? `Results for "${query}"` : 'Search YouTube Music'}
+            {query ? `Results for "${query}"` : 'Search Music'}
           </h1>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            {results.length} YouTube Music tracks found
+            {results.length} tracks found
           </span>
         </div>
 
@@ -96,7 +98,7 @@ export default function SearchView({ query }) {
             <div className="sound-wave-bar" style={{ width: '4px' }}></div>
             <div className="sound-wave-bar" style={{ width: '4px' }}></div>
           </div>
-          <span>Searching YouTube Music...</span>
+          <span>Searching high-fidelity music tracks...</span>
         </div>
       )}
 
@@ -124,10 +126,10 @@ export default function SearchView({ query }) {
             <Search size={30} />
           </div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-            {query ? 'No matching YouTube songs found' : 'Type to search YouTube Music'}
+            {query ? 'No matching songs found' : 'Type to search music'}
           </h3>
           <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.9rem' }}>
-            Search by track title, artist name, cover, or paste any YouTube URL to play.
+            Search by track title, artist name, album, or acoustic covers.
           </p>
         </div>
       )}

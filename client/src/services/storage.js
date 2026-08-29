@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   FAVORITES: 'streamsync_favorites',
   PLAYLISTS: 'streamsync_playlists',
   HISTORY: 'streamsync_history',
+  SEARCH_HISTORY: 'streamsync_search_history',
   SETTINGS: 'streamsync_settings'
 };
 
@@ -134,6 +135,53 @@ export const storageService = {
 
   clearHistory: () => {
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
+  },
+
+  // --- Search History ---
+  getSearchHistory: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  addSearchHistory: (query) => {
+    if (!query || !query.trim()) return;
+    const cleanQuery = query.trim();
+    let history = storageService.getSearchHistory();
+    history = history.filter(q => q.toLowerCase() !== cleanQuery.toLowerCase());
+    history.unshift(cleanQuery);
+    history = history.slice(0, 30);
+    localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(history));
+  },
+
+  clearSearchHistory: () => {
+    localStorage.removeItem(STORAGE_KEYS.SEARCH_HISTORY);
+  },
+
+  /**
+   * Get personalized artist/query hints from past search and listening history
+   */
+  getPersonalizedHints: () => {
+    const searches = storageService.getSearchHistory();
+    const played = storageService.getHistory();
+    const artists = new Set();
+
+    // Collect from searches
+    searches.slice(0, 5).forEach(s => {
+      if (s.length > 2) artists.add(s);
+    });
+
+    // Collect from played tracks
+    played.slice(0, 5).forEach(t => {
+      if (t.artist && t.artist !== 'Artist') {
+        artists.add(t.artist);
+      }
+    });
+
+    return Array.from(artists);
   },
 
   // --- Settings ---

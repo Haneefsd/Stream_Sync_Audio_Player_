@@ -22,11 +22,14 @@ export const apiService = {
   },
 
   /**
-   * Get Dynamic Trending & Discovery Mix
+   * Get Dynamic Trending & Discovery Mix (with optional search/listening history hints)
    */
-  getTrending: async () => {
+  getTrending: async (historyHints = '') => {
     try {
-      const res = await fetch(`${API_BASE}/trending`);
+      const url = historyHints 
+        ? `${API_BASE}/trending?history=${encodeURIComponent(historyHints)}`
+        : `${API_BASE}/trending`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch trending');
       return await res.json();
     } catch (err) {

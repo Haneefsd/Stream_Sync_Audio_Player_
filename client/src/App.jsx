@@ -6,6 +6,7 @@ import Header from './components/Header';
 import HomeView from './components/HomeView';
 import SearchView from './components/SearchView';
 import LibraryView from './components/LibraryView';
+import LikedSongsView from './components/LikedSongsView';
 import PlayerBar from './components/PlayerBar';
 import QueueDrawer from './components/QueueDrawer';
 import FullscreenPlayer from './components/FullscreenPlayer';
@@ -62,22 +63,11 @@ function MainApp() {
         {activeTab === 'library' && (
           <LibraryView 
             onSelectPlaylist={(pl) => setSelectedPlaylist(pl)} 
-            defaultSection="liked" 
           />
         )}
 
         {activeTab === 'favorites' && (
-          <LibraryView 
-            onSelectPlaylist={(pl) => setSelectedPlaylist(pl)} 
-            defaultSection="liked" 
-          />
-        )}
-
-        {activeTab === 'playlists' && (
-          <LibraryView 
-            onSelectPlaylist={(pl) => setSelectedPlaylist(pl)} 
-            defaultSection="playlists" 
-          />
+          <LikedSongsView />
         )}
       </main>
 

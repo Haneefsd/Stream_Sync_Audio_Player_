@@ -26,12 +26,13 @@ export async function searchHandler(req, res) {
 }
 
 /**
- * Dynamic Trending / Discovery handler - changes on every refresh
+ * Dynamic Trending handler customized by search/listening history
  */
 export async function trendingHandler(req, res) {
   try {
     const limit = parseInt(req.query.limit, 10) || 24;
-    const trendingData = await getYouTubeTrending(limit);
+    const history = req.query.history || '';
+    const trendingData = await getYouTubeTrending(history, limit);
 
     return res.json({
       sectionTitle: trendingData.sectionTitle || 'Trending Hits Today',

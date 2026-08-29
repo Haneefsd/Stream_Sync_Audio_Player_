@@ -2,45 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
 import TrackRow from './TrackRow';
-import TrackCard from './TrackCard';
 import { 
   Heart, 
   ListMusic, 
-  History, 
   Play, 
   Plus, 
   Trash2, 
   Music, 
-  Sparkles,
+  FolderPlus,
   Shuffle
 } from 'lucide-react';
 
-export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked' }) {
-  const { playTrack, toggleShuffle } = useAudioPlayer();
-  const [section, setSection] = useState(defaultSection); // 'liked' | 'playlists' | 'history'
+export default function LibraryView({ onSelectPlaylist }) {
+  const { playTrack, toggleShuffle, setActiveTab } = useAudioPlayer();
   const [favorites, setFavorites] = useState(storageService.getFavorites());
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
-  const [history, setHistory] = useState(storageService.getHistory());
+  const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'playlists' | 'liked'
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     setFavorites(storageService.getFavorites());
     setPlaylists(storageService.getPlaylists());
-    setHistory(storageService.getHistory());
-  }, [section]);
+  }, []);
 
-  const handlePlayAllFavorites = () => {
+  const handlePlayAllFavorites = (e) => {
+    if (e) e.stopPropagation();
     if (favorites.length > 0) {
       playTrack(favorites[0], favorites);
     }
   };
 
-  const handleShuffleFavorites = () => {
-    if (favorites.length > 0) {
-      const randomIndex = Math.floor(Math.random() * favorites.length);
-      playTrack(favorites[randomIndex], favorites);
-      toggleShuffle();
+  const handlePlayPlaylist = (e, playlist) => {
+    e.stopPropagation();
+    if (playlist.tracks && playlist.tracks.length > 0) {
+      playTrack(playlist.tracks[0], playlist.tracks);
     }
   };
 
@@ -54,14 +50,10 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
     if (onSelectPlaylist) onSelectPlaylist(created);
   };
 
-  const handleDeletePlaylist = (id) => {
+  const handleDeletePlaylist = (e, id) => {
+    e.stopPropagation();
     const updated = storageService.deletePlaylist(id);
     setPlaylists(updated);
-  };
-
-  const handleClearHistory = () => {
-    storageService.clearHistory();
-    setHistory([]);
   };
 
   return (
@@ -71,169 +63,158 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
         <div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Your Library</h1>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Stored locally on your device with zero cloud databases
+            All your playlists and saved liked songs in one place
           </span>
         </div>
 
-        {/* Section Navigation Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-elevated)', padding: '4px', borderRadius: 'var(--radius-full)' }}>
-          <button
-            onClick={() => setSection('liked')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1.1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.85rem',
-              fontWeight: section === 'liked' ? 700 : 500,
-              background: section === 'liked' ? 'var(--accent-pink)' : 'transparent',
-              color: section === 'liked' ? '#fff' : 'var(--text-secondary)'
-            }}
-          >
-            <Heart size={15} fill={section === 'liked' ? '#fff' : 'none'} />
-            <span>Liked Songs ({favorites.length})</span>
-          </button>
+        {/* Filter Pills & Create Playlist Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-elevated)', padding: '3px', borderRadius: 'var(--radius-full)' }}>
+            <button
+              onClick={() => setActiveTabFilter('all')}
+              style={{
+                padding: '0.45rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.82rem',
+                fontWeight: activeTabFilter === 'all' ? 700 : 500,
+                background: activeTabFilter === 'all' ? 'var(--accent-emerald)' : 'transparent',
+                color: activeTabFilter === 'all' ? '#000' : 'var(--text-secondary)'
+              }}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setActiveTabFilter('playlists')}
+              style={{
+                padding: '0.45rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.82rem',
+                fontWeight: activeTabFilter === 'playlists' ? 700 : 500,
+                background: activeTabFilter === 'playlists' ? 'var(--accent-emerald)' : 'transparent',
+                color: activeTabFilter === 'playlists' ? '#000' : 'var(--text-secondary)'
+              }}
+            >
+              Playlists ({playlists.length})
+            </button>
+            <button
+              onClick={() => setActiveTabFilter('liked')}
+              style={{
+                padding: '0.45rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.82rem',
+                fontWeight: activeTabFilter === 'liked' ? 700 : 500,
+                background: activeTabFilter === 'liked' ? 'var(--accent-pink)' : 'transparent',
+                color: activeTabFilter === 'liked' ? '#fff' : 'var(--text-secondary)'
+              }}
+            >
+              Liked ({favorites.length})
+            </button>
+          </div>
 
           <button
-            onClick={() => setSection('playlists')}
+            onClick={() => setShowCreateModal(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              padding: '0.5rem 1.1rem',
+              padding: '0.6rem 1.15rem',
               borderRadius: 'var(--radius-full)',
-              fontSize: '0.85rem',
-              fontWeight: section === 'playlists' ? 700 : 500,
-              background: section === 'playlists' ? 'var(--accent-emerald)' : 'transparent',
-              color: section === 'playlists' ? '#000' : 'var(--text-secondary)'
+              background: 'var(--accent-emerald)',
+              color: '#000',
+              fontWeight: 700,
+              fontSize: '0.85rem'
             }}
           >
-            <ListMusic size={15} />
-            <span>Playlists ({playlists.length})</span>
-          </button>
-
-          <button
-            onClick={() => setSection('history')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1.1rem',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.85rem',
-              fontWeight: section === 'history' ? 700 : 500,
-              background: section === 'history' ? 'var(--accent-cyan)' : 'transparent',
-              color: section === 'history' ? '#000' : 'var(--text-secondary)'
-            }}
-          >
-            <History size={15} />
-            <span>History</span>
+            <Plus size={16} />
+            <span>New Playlist</span>
           </button>
         </div>
       </div>
 
-      {/* SECTION 1: LIKED SONGS */}
-      {section === 'liked' && (
-        <div>
-          {favorites.length > 0 ? (
-            <div>
-              {/* Liked Header Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <button
-                  onClick={handlePlayAllFavorites}
-                  style={{
+      {/* 1. PLAYLISTS & LIKED SONGS GRID SECTION */}
+      {(activeTabFilter === 'all' || activeTabFilter === 'playlists') && (
+        <div style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+            Playlists & Collections
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '1.5rem' }}>
+            {/* LIKED SONGS HERO CARD */}
+            {(activeTabFilter === 'all' || activeTabFilter === 'liked') && (
+              <div
+                onClick={() => setActiveTab('favorites')}
+                className="glass-panel"
+                style={{
+                  gridColumn: activeTabFilter === 'all' ? 'span 2' : 'span 1',
+                  background: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+                  padding: '1.75rem',
+                  borderRadius: 'var(--radius-lg)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '200px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 10px 25px rgba(236, 72, 153, 0.3)',
+                  transition: 'transform 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'var(--accent-pink)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    boxShadow: '0 0 20px rgba(236, 72, 153, 0.4)'
-                  }}
-                >
-                  <Play size={18} fill="#fff" />
-                  <span>Play All</span>
-                </button>
+                    justifyContent: 'center'
+                  }}>
+                    <Heart size={26} fill="#fff" color="#fff" />
+                  </div>
 
-                <button
-                  onClick={handleShuffleFavorites}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                    fontWeight: 600,
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  <Shuffle size={16} />
-                  <span>Shuffle</span>
-                </button>
+                  {favorites.length > 0 && (
+                    <button
+                      onClick={handlePlayAllFavorites}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: '#fff',
+                        color: '#be185d',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                      }}
+                      title="Play All Liked Songs"
+                    >
+                      <Play size={20} fill="#be185d" style={{ marginLeft: '2px' }} />
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem' }}>
+                    Liked Songs
+                  </h3>
+                  <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.85)', fontWeight: 500 }}>
+                    {favorites.length} {favorites.length === 1 ? 'liked track' : 'liked tracks'}
+                  </span>
+                </div>
               </div>
+            )}
 
-              {/* Favorites Track List */}
-              <div className="track-list glass-panel" style={{ padding: '0.75rem' }}>
-                {favorites.map((track, i) => (
-                  <TrackRow key={track.id} track={track} index={i} trackList={favorites} />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-              <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(236, 72, 153, 0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                <Heart size={32} color="var(--accent-pink)" />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Liked Songs Yet</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Click the heart icon on any song to save it to your local favorites.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* SECTION 2: PLAYLISTS */}
-      {section === 'playlists' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-              Custom client-side playlists
-            </span>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.25rem',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--accent-emerald)',
-                color: '#000',
-                fontWeight: 700,
-                fontSize: '0.85rem'
-              }}
-            >
-              <Plus size={16} />
-              <span>Create Playlist</span>
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+            {/* CUSTOM USER PLAYLIST CARDS */}
             {playlists.map(pl => (
               <div
                 key={pl.id}
                 onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
                 className="glass-panel"
                 style={{
-                  padding: '1.5rem',
+                  padding: '1.25rem',
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
@@ -252,9 +233,33 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: '1rem',
-                  border: '1px solid var(--border-subtle)'
+                  border: '1px solid var(--border-subtle)',
+                  position: 'relative'
                 }}>
                   <Music size={40} color="var(--accent-emerald)" />
+                  
+                  {pl.tracks && pl.tracks.length > 0 && (
+                    <button
+                      onClick={(e) => handlePlayPlaylist(e, pl)}
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        right: '10px',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'var(--accent-emerald)',
+                        color: '#000',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4)'
+                      }}
+                      title="Play Playlist"
+                    >
+                      <Play size={18} fill="#000" style={{ marginLeft: '2px' }} />
+                    </button>
+                  )}
                 </div>
 
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.25rem' }}>{pl.name}</h3>
@@ -263,10 +268,7 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
                 </span>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeletePlaylist(pl.id);
-                  }}
+                  onClick={(e) => handleDeletePlaylist(e, pl.id)}
                   style={{
                     position: 'absolute',
                     top: '12px',
@@ -286,45 +288,40 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
         </div>
       )}
 
-      {/* SECTION 3: LISTENING HISTORY */}
-      {section === 'history' && (
-        <div>
-          {history.length > 0 ? (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                  Recently streamed tracks ({history.length})
-                </span>
-                <button
-                  onClick={handleClearHistory}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    fontSize: '0.8rem',
-                    color: '#ef4444'
-                  }}
-                >
-                  <Trash2 size={14} />
-                  <span>Clear History</span>
-                </button>
-              </div>
+      {/* 2. LIKED SONGS LIST PREVIEW SECTION */}
+      {(activeTabFilter === 'all' || activeTabFilter === 'liked') && (
+        <div style={{ marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Heart size={20} color="var(--accent-pink)" fill="var(--accent-pink)" />
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700 }}>Liked Songs List</h2>
+            </div>
 
-              <div className="track-list glass-panel" style={{ padding: '0.75rem' }}>
-                {history.map((track, i) => (
-                  <TrackRow key={`${track.id}_${i}`} track={track} index={i} trackList={history} />
-                ))}
-              </div>
+            {favorites.length > 0 && (
+              <button
+                onClick={() => setActiveTab('favorites')}
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: 'var(--accent-pink)',
+                  cursor: 'pointer'
+                }}
+              >
+                View Full Liked Panel →
+              </button>
+            )}
+          </div>
+
+          {favorites.length > 0 ? (
+            <div className="track-list glass-panel" style={{ padding: '0.75rem' }}>
+              {favorites.slice(0, 10).map((track, i) => (
+                <TrackRow key={track.id} track={track} index={i} trackList={favorites} />
+              ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-              <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                <History size={32} color="var(--accent-cyan)" />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Play History Yet</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Play any song to start tracking your recent listening history.
-              </p>
+            <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Heart size={30} color="var(--accent-pink)" style={{ margin: '0 auto 0.75rem' }} />
+              <p style={{ fontSize: '0.9rem' }}>No liked songs saved yet. Click the heart icon on any song to save it!</p>
             </div>
           )}
         </div>
@@ -332,7 +329,22 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
 
       {/* Create Playlist Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        <div 
+          className="modal-backdrop" 
+          onClick={() => setShowCreateModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem'
+          }}
+        >
           <div 
             className="glass-panel" 
             style={{ width: '100%', maxWidth: '420px', padding: '2rem', background: 'var(--bg-surface)' }}
@@ -343,7 +355,7 @@ export default function LibraryView({ onSelectPlaylist, defaultSection = 'liked'
               <input
                 type="text"
                 autoFocus
-                placeholder="Playlist name (e.g. Late Night Vibes)"
+                placeholder="Playlist name (e.g. Late Night Hits)"
                 value={newPlaylistName}
                 onChange={(e) => setNewPlaylistName(e.target.value)}
                 style={{

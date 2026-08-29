@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
+import { storageService } from '../services/storage';
 import TrackCard from './TrackCard';
 import { 
   Flame, 
   Play, 
-  Radio,
-  Zap,
-  TrendingUp,
-  Music2,
-  Sparkles
+  Zap, 
+  History, 
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 
 export default function HomeView({ onSearchGenre }) {
@@ -17,6 +17,7 @@ export default function HomeView({ onSearchGenre }) {
   const [trendingData, setTrendingData] = useState({ sectionTitle: 'Trending Hits', tracks: [], featured: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [activeMood, setActiveMood] = useState('All');
+  const [searchHistory, setSearchHistory] = useState(storageService.getSearchHistory().slice(0, 6));
 
   const moods = [
     { label: 'All', query: 'Top Hits Music' },
@@ -34,7 +35,11 @@ export default function HomeView({ onSearchGenre }) {
     async function loadTrending() {
       setIsLoading(true);
       try {
-        const data = await apiService.getTrending();
+        // Collect past search queries & played artists for personalized recommendations
+        const hints = storageService.getPersonalizedHints();
+        const historyParam = hints.join(',');
+
+        const data = await apiService.getTrending(historyParam);
         if (isMounted) {
           setTrendingData(data);
         }
@@ -45,6 +50,7 @@ export default function HomeView({ onSearchGenre }) {
       }
     }
     loadTrending();
+    setSearchHistory(storageService.getSearchHistory().slice(0, 6));
     return () => { isMounted = false; };
   }, []);
 
@@ -53,6 +59,12 @@ export default function HomeView({ onSearchGenre }) {
     if (mood.label === 'All') return;
     if (onSearchGenre) {
       onSearchGenre(mood.query);
+    }
+  };
+
+  const handleHistoryClick = (query) => {
+    if (onSearchGenre) {
+      onSearchGenre(query);
     }
   };
 
@@ -160,6 +172,49 @@ export default function HomeView({ onSearchGenre }) {
         )}
       </div>
 
+      {/* Recent Searches Quick-Row (if search history exists) */}
+      {searchHistory.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600 }}>
+            <History size={14} />
+            <span>RECENT SEARCHES</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            {searchHistory.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleHistoryClick(q)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: 'var(--radius-full)',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent-emerald)';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }}
+              >
+                <span>{q}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Mood / Genre Filter Chips */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '2.5rem' }}>
         {moods.map(m => (
@@ -178,7 +233,7 @@ export default function HomeView({ onSearchGenre }) {
         ))}
       </div>
 
-      {/* Section 1: Dynamic Trending & Discovery Mix (Rotates on Refresh) */}
+      {/* Dynamic Trending & Discovery Mix (Personalized by Search History) */}
       <div style={{ marginBottom: '3.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -190,7 +245,7 @@ export default function HomeView({ onSearchGenre }) {
                 {trendingData.sectionTitle || 'Trending Hits Today'}
               </h2>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Fresh discovery mix • Refreshes with new tracks
+                Personalized discovery mix • Updates dynamically based on your taste
               </span>
             </div>
           </div>
@@ -198,7 +253,7 @@ export default function HomeView({ onSearchGenre }) {
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-            Loading tracks...
+            Loading personalized tracks...
           </div>
         ) : (
           <div className="track-grid">
