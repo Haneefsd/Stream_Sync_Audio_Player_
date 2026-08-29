@@ -68,27 +68,40 @@ export const apiService = {
   },
 
   /**
-   * Builds the appropriate stream URL based on track source and user quality preferences
+   * Builds the stream URL with proxying to ensure CORS & range seeking support
    */
   getStreamUrl: (track, preferredQuality = '320kbps') => {
     if (!track) return null;
 
     if (track.source === 'jiosaavn') {
+      let rawUrl = track.streamUrl;
       if (Array.isArray(track.downloadUrls) && track.downloadUrls.length > 0) {
         const match = track.downloadUrls.find(d => d.quality === preferredQuality) ||
                       track.downloadUrls.find(d => d.quality === '320kbps') ||
                       track.downloadUrls.find(d => d.quality === '160kbps') ||
                       track.downloadUrls[0];
-        if (match?.url) return match.url;
+        if (match?.url) rawUrl = match.url;
       }
-      return track.streamUrl || null;
+      if (rawUrl) {
+        // Route through local proxy stream to prevent browser CORS issues
+        return `${API_BASE}/proxy-stream?url=${encodeURIComponent(rawUrl)}`;
+      }
     }
 
     if (track.source === 'youtube') {
       const videoId = track.originalId || track.id?.replace('youtube_', '');
-      return `${API_BASE}/stream?id=${videoId}`;
+      const title = encodeURIComponent(track.title || '');
+      const artist = encodeURIComponent(track.artist || '');
+      return `${API_BASE}/stream?id=${videoId}&title=${title}&artist=${artist}`;
     }
 
-    return track.streamUrl || null;
+    if (track.streamUrl) {
+      if (track.streamUrl.startsWith('http://') || track.streamUrl.startsWith('https://')) {
+        return `${API_BASE}/proxy-stream?url=${encodeURIComponent(track.streamUrl)}`;
+      }
+      return track.streamUrl;
+    }
+
+    return null;
   }
 };

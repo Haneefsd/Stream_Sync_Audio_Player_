@@ -58,7 +58,7 @@ export const AudioPlayerProvider = ({ children }) => {
       analyserRef.current = analyser;
       sourceNodeRef.current = source;
     } catch (err) {
-      console.warn('Web Audio API initialized with direct destination fallback:', err);
+      console.warn('Web Audio Analyzer initialized in direct mode:', err.message);
     }
   };
 
@@ -91,9 +91,8 @@ export const AudioPlayerProvider = ({ children }) => {
     };
 
     const handleError = (e) => {
-      console.error('Audio playback error:', e);
+      console.warn('Audio playback event error:', e);
       setIsBuffering(false);
-      setIsPlaying(false);
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -115,7 +114,7 @@ export const AudioPlayerProvider = ({ children }) => {
     };
   }, [repeatMode, shuffle, queue, currentIndex]);
 
-  // Sync MediaSession API (Lock Screen & Bluetooth controls)
+  // Sync MediaSession API
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
       navigator.mediaSession.metadata = new window.MediaMetadata({
@@ -143,7 +142,7 @@ export const AudioPlayerProvider = ({ children }) => {
     initWebAudio();
 
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      audioContextRef.current.resume().catch(() => {});
     }
 
     const streamUrl = apiService.getStreamUrl(track, audioQuality);
@@ -153,6 +152,7 @@ export const AudioPlayerProvider = ({ children }) => {
     }
 
     const audio = audioRef.current;
+    audio.pause();
     audio.src = streamUrl;
     audio.load();
 
@@ -164,7 +164,7 @@ export const AudioPlayerProvider = ({ children }) => {
       setIsPlaying(true);
       storageService.addToHistory(track);
     } catch (err) {
-      console.warn('Playback initiation prevented or user gesture required:', err);
+      console.warn('Playback initiation prevented or user gesture required:', err.message);
     }
 
     if (newQueue) {
@@ -192,7 +192,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
     initWebAudio();
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      audioContextRef.current.resume().catch(() => {});
     }
 
     if (isPlaying) {

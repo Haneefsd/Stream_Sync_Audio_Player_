@@ -15,6 +15,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "play-dl": "^1.9.7",
+    "youtubei.js": "^18.0.0",
     "yt-search": "^2.12.1"
   }
 }
