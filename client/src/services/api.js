@@ -68,7 +68,7 @@ export const apiService = {
   },
 
   /**
-   * Builds the stream URL with proxying to ensure CORS & range seeking support
+   * Builds the stream URL based on track source and user preferences
    */
   getStreamUrl: (track, preferredQuality = '320kbps') => {
     if (!track) return null;
@@ -82,10 +82,7 @@ export const apiService = {
                       track.downloadUrls[0];
         if (match?.url) rawUrl = match.url;
       }
-      if (rawUrl) {
-        // Route through local proxy stream to prevent browser CORS issues
-        return `${API_BASE}/proxy-stream?url=${encodeURIComponent(rawUrl)}`;
-      }
+      return rawUrl || track.streamUrl || null;
     }
 
     if (track.source === 'youtube') {
@@ -95,13 +92,6 @@ export const apiService = {
       return `${API_BASE}/stream?id=${videoId}&title=${title}&artist=${artist}`;
     }
 
-    if (track.streamUrl) {
-      if (track.streamUrl.startsWith('http://') || track.streamUrl.startsWith('https://')) {
-        return `${API_BASE}/proxy-stream?url=${encodeURIComponent(track.streamUrl)}`;
-      }
-      return track.streamUrl;
-    }
-
-    return null;
+    return track.streamUrl || null;
   }
 };

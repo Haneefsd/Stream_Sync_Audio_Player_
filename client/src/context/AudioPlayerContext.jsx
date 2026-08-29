@@ -29,7 +29,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isSpotifyModalOpen, setIsSpotifyModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'search' | 'library' | 'favorites' | 'playlists'
+  const [activeTab, setActiveTab] = useState('home');
 
   // Audio References
   const audioRef = useRef(new Audio());
@@ -37,7 +37,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const analyserRef = useRef(null);
   const sourceNodeRef = useRef(null);
 
-  // Setup Web Audio API Analyzer for Visualizer
+  // Initialize Web Audio API Analyzer safely without forcing restrictive CORS on the audio tag
   const initWebAudio = () => {
     if (audioContextRef.current) return;
     try {
@@ -49,20 +49,23 @@ export const AudioPlayerProvider = ({ children }) => {
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
 
-      audioRef.current.crossOrigin = 'anonymous';
-      const source = audioCtx.createMediaElementSource(audioRef.current);
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
+      try {
+        const source = audioCtx.createMediaElementSource(audioRef.current);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        sourceNodeRef.current = source;
+      } catch (sourceErr) {
+        // Direct media element connection might be restricted, fallback gracefully
+      }
 
       audioContextRef.current = audioCtx;
       analyserRef.current = analyser;
-      sourceNodeRef.current = source;
     } catch (err) {
-      console.warn('Web Audio Analyzer initialized in direct mode:', err.message);
+      console.warn('Web Audio Analyzer initialized in visual-only mode:', err.message);
     }
   };
 
-  // Audio element listeners
+  // Audio element event listeners
   useEffect(() => {
     const audio = audioRef.current;
     audio.volume = volume;
@@ -70,7 +73,9 @@ export const AudioPlayerProvider = ({ children }) => {
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       if (audio.buffered.length > 0) {
-        setBufferedTime(audio.buffered.end(audio.buffered.length - 1));
+        try {
+          setBufferedTime(audio.buffered.end(audio.buffered.length - 1));
+        } catch {}
       }
     };
 
@@ -90,9 +95,16 @@ export const AudioPlayerProvider = ({ children }) => {
       handleNextTrack(true);
     };
 
-    const handleError = (e) => {
-      console.warn('Audio playback event error:', e);
+    const handleError = () => {
       setIsBuffering(false);
+      // Auto-fallback: if direct URL failed, attempt proxy URL
+      if (currentTrack && audio.src && !audio.src.includes('/api/proxy-stream')) {
+        console.log('Attempting proxy stream fallback for track:', currentTrack.title);
+        const proxyUrl = `/api/proxy-stream?url=${encodeURIComponent(audio.src)}`;
+        audio.src = proxyUrl;
+        audio.load();
+        audio.play().catch(() => {});
+      }
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -112,7 +124,7 @@ export const AudioPlayerProvider = ({ children }) => {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [repeatMode, shuffle, queue, currentIndex]);
+  }, [repeatMode, shuffle, queue, currentIndex, currentTrack]);
 
   // Sync MediaSession API
   useEffect(() => {
@@ -152,19 +164,31 @@ export const AudioPlayerProvider = ({ children }) => {
     }
 
     const audio = audioRef.current;
-    audio.pause();
-    audio.src = streamUrl;
-    audio.load();
+    
+    // Clean audio state reset
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = streamUrl;
+      audio.load();
+    } catch (loadErr) {
+      console.warn('Audio source loading issue:', loadErr);
+    }
 
     setCurrentTrack(track);
     setIsBuffering(true);
 
     try {
-      await audio.play();
-      setIsPlaying(true);
-      storageService.addToHistory(track);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        await playPromise;
+        setIsPlaying(true);
+        setIsBuffering(false);
+        storageService.addToHistory(track);
+      }
     } catch (err) {
-      console.warn('Playback initiation prevented or user gesture required:', err.message);
+      console.warn('Playback gesture required or source loading:', err.message);
+      setIsBuffering(false);
     }
 
     if (newQueue) {
@@ -199,7 +223,10 @@ export const AudioPlayerProvider = ({ children }) => {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play().then(() => setIsPlaying(true)).catch(console.error);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => setIsPlaying(true)).catch(console.error);
+      }
     }
   };
 
