@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AudioPlayerProvider, useAudioPlayer } from './context/AudioPlayerContext';
+import { AudioPlayerProvider } from './context/AudioPlayerProvider';
+import { useAudioPlayer } from './context/AudioPlayerContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import HomeView from './components/HomeView';
@@ -107,9 +108,7 @@ function MainApp() {
         <PlaylistDetailModal 
           playlist={selectedPlaylist} 
           onClose={() => setSelectedPlaylist(null)}
-          onUpdate={() => {
-            // refresh playlist details
-          }}
+          onUpdate={() => {}}
         />
       )}
     </div>
