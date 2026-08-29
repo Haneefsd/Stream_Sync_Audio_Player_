@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 import { apiService } from '../services/api';
 import { storageService } from '../services/storage';
+export { useAudioPlayer } from './useAudioPlayer';
 
-const AudioPlayerContext = createContext(null);
+export const AudioPlayerContext = createContext(null);
 
 export const AudioPlayerProvider = ({ children }) => {
   const initialSettings = storageService.getSettings();
@@ -21,7 +22,7 @@ export const AudioPlayerProvider = ({ children }) => {
   // Queue & Modes
   const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off'); // 'off' | 'all' | 'one'
+  const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off');
   const [shuffle, setShuffle] = useState(initialSettings.shuffle || false);
   const [audioQuality, setAudioQuality] = useState(initialSettings.preferredQuality || '320kbps');
 
@@ -99,7 +100,6 @@ export const AudioPlayerProvider = ({ children }) => {
       setIsBuffering(false);
       // Auto-fallback: if direct URL failed, attempt proxy URL
       if (currentTrack && audio.src && !audio.src.includes('/api/proxy-stream')) {
-        console.log('Attempting proxy stream fallback for track:', currentTrack.title);
         const proxyUrl = `/api/proxy-stream?url=${encodeURIComponent(audio.src)}`;
         audio.src = proxyUrl;
         audio.load();
@@ -396,12 +396,4 @@ export const AudioPlayerProvider = ({ children }) => {
       {children}
     </AudioPlayerContext.Provider>
   );
-};
-
-export const useAudioPlayer = () => {
-  const context = useContext(AudioPlayerContext);
-  if (!context) {
-    throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
-  }
-  return context;
 };
