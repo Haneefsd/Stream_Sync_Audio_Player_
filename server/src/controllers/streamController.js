@@ -1,227 +1,119 @@
 import axios from 'axios';
 import { searchJioSaavn } from '../services/jiosaavnService.js';
 
-const INVIDIOUS_INSTANCES = [
-  'https://invidious.nerdvpn.de',
+const INVIDIOUS_MIRRORS = [
   'https://inv.nadeko.net',
+  'https://invidious.nerdvpn.de',
   'https://invidious.jing.rocks',
   'https://yt.artemislena.eu',
   'https://invidious.privacyredirect.com',
-  'https://iv.datura.network'
+  'https://iv.datura.network',
+  'https://invidious.protokolla.fi'
 ];
 
-const PIPED_INSTANCES = [
+const PIPED_MIRRORS = [
   'https://pipedapi.kavin.rocks',
   'https://api.piped.yt',
   'https://pipedapi.adminforge.de',
   'https://api-piped.mha.fi'
 ];
 
+const COBALT_INSTANCES = [
+  'https://co.wuk.sh/api/json',
+  'https://api.cobalt.tools/api/json',
+  'https://cobalt.kwiatekm.com/api/json'
+];
+
 /**
- * Direct zero-dependency YouTube audio URL extractor using YouTube's Android API
+ * Clean track title for smart matching
  */
-async function getDirectAndroidStreamUrl(videoId) {
-  const clients = [
-    {
-      clientName: 'ANDROID_TESTSUITE',
-      clientVersion: '1.9',
-      androidSdkVersion: 30,
-      hl: 'en',
-      gl: 'US'
-    },
-    {
-      clientName: 'ANDROID_MUSIC',
-      clientVersion: '6.43.52',
-      androidSdkVersion: 31,
-      hl: 'en',
-      gl: 'US'
-    },
-    {
-      clientName: 'ANDROID',
-      clientVersion: '19.29.37',
-      androidSdkVersion: 31,
-      hl: 'en',
-      gl: 'US'
-    },
-    {
-      clientName: 'IOS',
-      clientVersion: '19.29.1',
-      deviceModel: 'iPhone14,3',
-      hl: 'en',
-      gl: 'US'
-    }
-  ];
+function cleanSongTitle(title = '', artist = '') {
+  let clean = decodeURIComponent(title)
+    .replace(/\(.*?\)|\[.*?\]/g, '')
+    .replace(/official video|music video|lyric video|audio|full song|video song|hd|4k|remix|version/gi, '')
+    .replace(/[^\w\s\d]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  for (const client of clients) {
-    try {
-      const res = await axios.post(
-        'https://www.youtube.com/youtubei/v1/player',
-        {
-          videoId,
-          context: { client }
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; US) gzip'
-          },
-          timeout: 6000
-        }
-      );
+  let cleanArt = decodeURIComponent(artist || '')
+    .replace(/vevo|official|channel|music|records/gi, '')
+    .replace(/[^\w\s\d]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-      const formats = res.data?.streamingData?.adaptiveFormats || res.data?.streamingData?.formats || [];
-      const audioFormats = formats.filter(f => f.hasAudio !== false && (f.mimeType?.includes('audio') || f.audioQuality));
-
-      // Find format with direct unencrypted URL
-      const bestFormat = audioFormats.find(f => f.url && f.mimeType?.includes('audio/mp4')) ||
-                         audioFormats.find(f => f.url && f.mimeType?.includes('audio')) ||
-                         audioFormats.find(f => f.url);
-
-      if (bestFormat && bestFormat.url) {
-        return {
-          url: bestFormat.url,
-          mimeType: bestFormat.mimeType?.split(';')[0] || 'audio/mp4',
-          contentLength: bestFormat.contentLength
-        };
-      }
-    } catch (err) {
-      // Continue to next client config
-    }
-  }
-  return null;
+  return { title: clean, artist: cleanArt, query: `${clean} ${cleanArt}`.trim() };
 }
 
 /**
- * Streams audio from YouTube video ID with multi-tiered fallback and byte-range seeking
+ * Strategy 1: Match with JioSaavn 320kbps CDN stream
  */
-export async function streamHandler(req, res) {
-  const videoId = req.query.id || req.query.videoId;
-  if (!videoId) {
-    return res.status(400).json({ error: 'Missing YouTube video ID (id parameter)' });
-  }
+async function tryJioSaavnMatch(videoTitle, videoArtist, range, res) {
+  if (!videoTitle) return false;
 
-  const range = req.headers.range;
-  const videoTitle = req.query.title || '';
-  const videoArtist = req.query.artist || '';
-
-  // 1. STRATEGY 1: Smart JioSaavn Matcher (Plays pristine 320kbps CDN stream with 0 buffering)
-  if (videoTitle) {
-    try {
-      const cleanTitle = decodeURIComponent(videoTitle)
-        .replace(/\(.*?\)|\[.*?\]/g, '')
-        .replace(/official video|music video|lyric video|audio|full song|video song|hd|4k/gi, '')
-        .trim();
-      const cleanArtist = decodeURIComponent(videoArtist || '').replace(/vevo|official|channel/gi, '').trim();
-
-      const saavnResults = await searchJioSaavn(`${cleanTitle} ${cleanArtist}`, 3);
-      if (saavnResults && saavnResults.length > 0 && saavnResults[0].streamUrl) {
-        const saavnTrack = saavnResults[0];
-
-        const saavnHeaders = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://www.jiosaavn.com/'
-        };
-        if (range) saavnHeaders.Range = range;
-
-        const saavnRes = await axios({
-          method: 'GET',
-          url: saavnTrack.streamUrl,
-          responseType: 'stream',
-          headers: saavnHeaders,
-          timeout: 8000
-        });
-
-        res.status(saavnRes.status);
-        ['content-type', 'content-length', 'content-range', 'accept-ranges'].forEach(h => {
-          if (saavnRes.headers[h]) res.setHeader(h, saavnRes.headers[h]);
-        });
-
-        if (!res.getHeader('content-type')) res.setHeader('Content-Type', 'audio/mp4');
-        res.setHeader('Accept-Ranges', 'bytes');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-
-        saavnRes.data.pipe(res);
-
-        saavnRes.data.on('error', () => {
-          if (!res.headersSent) res.status(500).end();
-        });
-
-        req.on('close', () => {
-          if (saavnRes.data && typeof saavnRes.data.destroy === 'function') {
-            saavnRes.data.destroy();
-          }
-        });
-
-        return;
-      }
-    } catch (saavnErr) {
-      // Proceed to direct extraction
-    }
-  }
-
-  // 2. STRATEGY 2: Direct Android Client Stream (No cipher signature decipher needed)
+  const { query } = cleanSongTitle(videoTitle, videoArtist);
   try {
-    const directAudio = await getDirectAndroidStreamUrl(videoId);
-    if (directAudio && directAudio.url) {
+    const results = await searchJioSaavn(query, 3);
+    if (results && results.length > 0 && results[0].streamUrl) {
+      const saavnTrack = results[0];
+      console.log(`[Stream] JioSaavn 320k matched for "${videoTitle}" -> "${saavnTrack.title}"`);
+
       const headers = {
-        'User-Agent': 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; US) gzip'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.jiosaavn.com/'
       };
       if (range) headers.Range = range;
 
-      const ytResponse = await axios({
+      const saavnRes = await axios({
         method: 'GET',
-        url: directAudio.url,
+        url: saavnTrack.streamUrl,
         responseType: 'stream',
         headers,
-        timeout: 10000
+        timeout: 8000
       });
 
-      res.status(ytResponse.status);
+      res.status(saavnRes.status);
       ['content-type', 'content-length', 'content-range', 'accept-ranges'].forEach(h => {
-        if (ytResponse.headers[h]) res.setHeader(h, ytResponse.headers[h]);
+        if (saavnRes.headers[h]) res.setHeader(h, saavnRes.headers[h]);
       });
 
-      if (!res.getHeader('content-type')) res.setHeader('Content-Type', directAudio.mimeType || 'audio/mp4');
+      if (!res.getHeader('content-type')) res.setHeader('Content-Type', 'audio/mp4');
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Access-Control-Allow-Origin', '*');
 
-      ytResponse.data.pipe(res);
+      saavnRes.data.pipe(res);
 
-      ytResponse.data.on('error', () => {
-        if (!res.headersSent) res.status(500).end();
-      });
-
-      req.on('close', () => {
-        if (ytResponse.data && typeof ytResponse.data.destroy === 'function') {
-          ytResponse.data.destroy();
-        }
-      });
-
-      return;
+      reqCleanup(saavnRes.data, res);
+      return true;
     }
-  } catch (directErr) {
-    console.warn(`Direct Android streaming failed for ${videoId}:`, directErr.message);
+  } catch (err) {
+    console.warn('[Stream] JioSaavn match failed:', err.message);
   }
+  return false;
+}
 
-  // 3. STRATEGY 3: Invidious Direct Audio Redirect (itag 140 = 128k AAC/M4A)
-  for (const mirror of INVIDIOUS_INSTANCES) {
+/**
+ * Strategy 2: Direct Invidious Audio Stream (itag 140)
+ */
+async function tryInvidiousStream(videoId, range, res) {
+  for (const mirror of INVIDIOUS_MIRRORS) {
     try {
       const invidiousUrl = `${mirror}/latest_version?id=${videoId}&itag=140`;
-      const invHeaders = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       };
-      if (range) invHeaders.Range = range;
+      if (range) headers.Range = range;
 
       const invResponse = await axios({
         method: 'GET',
         url: invidiousUrl,
         responseType: 'stream',
-        headers: invHeaders,
-        timeout: 6000,
+        headers,
+        timeout: 7000,
         maxRedirects: 5
       });
 
       if (invResponse.status === 200 || invResponse.status === 206) {
+        console.log(`[Stream] Invidious mirror active (${mirror}) for ${videoId}`);
         res.status(invResponse.status);
         ['content-type', 'content-length', 'content-range', 'accept-ranges'].forEach(h => {
           if (invResponse.headers[h]) res.setHeader(h, invResponse.headers[h]);
@@ -232,26 +124,21 @@ export async function streamHandler(req, res) {
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         invResponse.data.pipe(res);
-
-        invResponse.data.on('error', () => {
-          if (!res.headersSent) res.status(500).end();
-        });
-
-        req.on('close', () => {
-          if (invResponse.data && typeof invResponse.data.destroy === 'function') {
-            invResponse.data.destroy();
-          }
-        });
-
-        return;
+        reqCleanup(invResponse.data, res);
+        return true;
       }
-    } catch (invErr) {
+    } catch (err) {
       // Try next mirror
     }
   }
+  return false;
+}
 
-  // 4. STRATEGY 4: Piped API Audio Stream Proxies
-  for (const instance of PIPED_INSTANCES) {
+/**
+ * Strategy 3: Piped API Audio Stream
+ */
+async function tryPipedStream(videoId, range, res) {
+  for (const instance of PIPED_MIRRORS) {
     try {
       const pipedRes = await axios.get(`${instance}/streams/${videoId}`, { timeout: 4000 });
       const audioStreams = pipedRes.data?.audioStreams || [];
@@ -265,32 +152,114 @@ export async function streamHandler(req, res) {
           timeout: 8000
         });
 
+        console.log(`[Stream] Piped instance active (${instance}) for ${videoId}`);
         res.status(audioProxy.status);
         res.setHeader('Content-Type', bestStream.mimeType || 'audio/webm');
         res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         audioProxy.data.pipe(res);
-
-        audioProxy.data.on('error', () => {
-          if (!res.headersSent) res.status(500).end();
-        });
-
-        req.on('close', () => {
-          if (audioProxy.data && typeof audioProxy.data.destroy === 'function') {
-            audioProxy.data.destroy();
-          }
-        });
-
-        return;
+        reqCleanup(audioProxy.data, res);
+        return true;
       }
     } catch (err) {
-      // Try next piped mirror
+      // Try next instance
     }
   }
+  return false;
+}
 
+/**
+ * Strategy 4: Cobalt Audio Extractor
+ */
+async function tryCobaltStream(videoId, range, res) {
+  const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  for (const instance of COBALT_INSTANCES) {
+    try {
+      const cobaltRes = await axios.post(
+        instance,
+        {
+          url: youtubeUrl,
+          isAudioOnly: true,
+          aFormat: 'mp3'
+        },
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'StreamSync/1.0'
+          },
+          timeout: 6000
+        }
+      );
+
+      const downloadUrl = cobaltRes.data?.url;
+      if (downloadUrl) {
+        console.log(`[Stream] Cobalt audio link retrieved for ${videoId}`);
+        const cobaltStream = await axios({
+          method: 'GET',
+          url: downloadUrl,
+          responseType: 'stream',
+          headers: range ? { Range: range } : {},
+          timeout: 8000
+        });
+
+        res.status(cobaltStream.status);
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        cobaltStream.data.pipe(res);
+        reqCleanup(cobaltStream.data, res);
+        return true;
+      }
+    } catch (err) {
+      // Try next cobalt instance
+    }
+  }
+  return false;
+}
+
+function reqCleanup(stream, res) {
+  stream.on('error', () => {
+    if (!res.headersSent) res.status(500).end();
+  });
+}
+
+/**
+ * Master multi-strategy stream handler
+ */
+export async function streamHandler(req, res) {
+  const videoId = req.query.id || req.query.videoId;
+  if (!videoId) {
+    return res.status(400).json({ error: 'Missing YouTube video ID' });
+  }
+
+  const range = req.headers.range;
+  const videoTitle = req.query.title || '';
+  const videoArtist = req.query.artist || '';
+
+  // 1. First priority: High-Speed 320kbps Studio Match
+  if (videoTitle) {
+    const matched = await tryJioSaavnMatch(videoTitle, videoArtist, range, res);
+    if (matched) return;
+  }
+
+  // 2. Second priority: Invidious Direct AAC/M4A Stream
+  const invidiousSuccess = await tryInvidiousStream(videoId, range, res);
+  if (invidiousSuccess) return;
+
+  // 3. Third priority: Piped API Audio Stream
+  const pipedSuccess = await tryPipedStream(videoId, range, res);
+  if (pipedSuccess) return;
+
+  // 4. Fourth priority: Cobalt Audio Engine
+  const cobaltSuccess = await tryCobaltStream(videoId, range, res);
+  if (cobaltSuccess) return;
+
+  // 5. Fallback: Search JioSaavn by videoId or generic query
   if (!res.headersSent) {
-    return res.status(500).json({ error: 'Failed to extract audio stream for this track' });
+    return res.status(500).json({ error: 'Audio stream temporarily unavailable for this track.' });
   }
 }
 
@@ -343,7 +312,7 @@ export async function proxyStreamHandler(req, res) {
       }
     });
   } catch (err) {
-    console.error('Proxy stream error:', err.message);
+    console.error('[Proxy] Stream error:', err.message);
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to proxy audio stream' });
     }

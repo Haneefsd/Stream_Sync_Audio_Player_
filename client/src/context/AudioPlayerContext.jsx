@@ -36,9 +36,9 @@ export const AudioPlayerProvider = ({ children }) => {
   const audioRef = useRef(new Audio());
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
-  const sourceNodeRef = useRef(null);
+  const isRetryingRef = useRef(false);
 
-  // Initialize Web Audio API Analyzer safely without forcing restrictive CORS on the audio tag
+  // Initialize Web Audio API Analyzer safely without forcing restrictive CORS
   const initWebAudio = () => {
     if (audioContextRef.current) return;
     try {
@@ -54,7 +54,6 @@ export const AudioPlayerProvider = ({ children }) => {
         const source = audioCtx.createMediaElementSource(audioRef.current);
         source.connect(analyser);
         analyser.connect(audioCtx.destination);
-        sourceNodeRef.current = source;
       } catch (sourceErr) {
         // Direct media element connection might be restricted, fallback gracefully
       }
@@ -85,10 +84,15 @@ export const AudioPlayerProvider = ({ children }) => {
       setIsBuffering(false);
     };
 
+    const handleCanPlay = () => {
+      setIsBuffering(false);
+    };
+
     const handleWaiting = () => setIsBuffering(true);
     const handlePlaying = () => {
       setIsBuffering(false);
       setIsPlaying(true);
+      isRetryingRef.current = false;
     };
     const handlePause = () => setIsPlaying(false);
 
@@ -98,17 +102,31 @@ export const AudioPlayerProvider = ({ children }) => {
 
     const handleError = () => {
       setIsBuffering(false);
-      // Auto-fallback: if direct URL failed, attempt proxy URL
-      if (currentTrack && audio.src && !audio.src.includes('/api/proxy-stream')) {
-        const proxyUrl = `/api/proxy-stream?url=${encodeURIComponent(audio.src)}`;
-        audio.src = proxyUrl;
-        audio.load();
-        audio.play().catch(() => {});
+      // Auto-recovery: if direct URL failed and we haven't retried yet, switch to proxy
+      if (currentTrack && !isRetryingRef.current) {
+        isRetryingRef.current = true;
+        const currentSrc = audio.src || '';
+        
+        let fallbackUrl = null;
+        if (currentTrack.source === 'jiosaavn' && !currentSrc.includes('/api/proxy-stream')) {
+          fallbackUrl = `/api/proxy-stream?url=${encodeURIComponent(currentTrack.streamUrl || currentSrc)}`;
+        } else if (currentTrack.source === 'youtube') {
+          const videoId = currentTrack.originalId || currentTrack.id?.replace('youtube_', '');
+          fallbackUrl = `/api/stream?id=${videoId}&title=${encodeURIComponent(currentTrack.title || '')}&artist=${encodeURIComponent(currentTrack.artist || '')}`;
+        }
+
+        if (fallbackUrl && fallbackUrl !== currentSrc) {
+          console.log('[Player] Switching to proxy stream fallback:', fallbackUrl);
+          audio.src = fallbackUrl;
+          audio.load();
+          audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        }
       }
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('waiting', handleWaiting);
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('pause', handlePause);
@@ -118,6 +136,7 @@ export const AudioPlayerProvider = ({ children }) => {
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
@@ -152,6 +171,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const playTrack = useCallback(async (track, newQueue = null) => {
     if (!track) return;
     initWebAudio();
+    isRetryingRef.current = false;
 
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume().catch(() => {});
@@ -187,7 +207,7 @@ export const AudioPlayerProvider = ({ children }) => {
         storageService.addToHistory(track);
       }
     } catch (err) {
-      console.warn('Playback gesture required or source loading:', err.message);
+      // User gesture needed or error fallback
       setIsBuffering(false);
     }
 
