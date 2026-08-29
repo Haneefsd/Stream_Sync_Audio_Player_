@@ -7,7 +7,7 @@ dotenv.config();
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
 /**
- * Parses ISO 8601 duration (e.g. PT3M45S, PT1H2M30S) into seconds
+ * Parses ISO 8601 duration into seconds
  */
 function parseIsoDuration(durationStr) {
   if (!durationStr) return 0;
@@ -22,7 +22,7 @@ function parseIsoDuration(durationStr) {
 /**
  * Search tracks using official YouTube Data API v3
  */
-async function searchYouTubeViaApi(query, limit = 24) {
+async function searchViaApi(query, limit = 24) {
   const searchUrl = 'https://www.googleapis.com/youtube/v3/search';
   const res = await axios.get(searchUrl, {
     params: {
@@ -30,7 +30,7 @@ async function searchYouTubeViaApi(query, limit = 24) {
       part: 'snippet',
       q: `${query.trim()}`,
       type: 'video',
-      videoCategoryId: '10', // Music Category
+      videoCategoryId: '10',
       maxResults: limit
     },
     timeout: 6000
@@ -39,7 +39,6 @@ async function searchYouTubeViaApi(query, limit = 24) {
   const items = res.data?.items || [];
   if (items.length === 0) return [];
 
-  // Fetch duration and high-res details
   const videoIds = items.map(i => i.id?.videoId).filter(Boolean).join(',');
   let durationMap = {};
 
@@ -56,9 +55,7 @@ async function searchYouTubeViaApi(query, limit = 24) {
     (detailsRes.data?.items || []).forEach(item => {
       durationMap[item.id] = parseIsoDuration(item.contentDetails?.duration);
     });
-  } catch (err) {
-    // Non-critical, duration fallback
-  }
+  } catch (err) {}
 
   return items.map(item => {
     const videoId = item.id?.videoId;
@@ -68,104 +65,77 @@ async function searchYouTubeViaApi(query, limit = 24) {
                       snippet.thumbnails?.default?.url;
 
     return {
-      id: `youtube_${videoId}`,
+      id: `track_${videoId}`,
       originalId: videoId,
       title: snippet.title,
-      artist: snippet.channelTitle || 'YouTube Music',
-      album: 'YouTube Music',
+      artist: snippet.channelTitle || 'Artist',
+      album: 'Single',
       duration: durationMap[videoId] || 0,
       thumbnailUrl: thumbnail,
-      source: 'youtube',
-      youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`
+      source: 'stream'
     };
   });
 }
 
 /**
- * Fallback search using yt-search scraper
+ * Scraper fallback
  */
-async function searchYouTubeViaScraper(query, limit = 24) {
-  const searchResults = await ytSearch({ query: `${query.trim()} music`, page: 1 });
+async function searchViaScraper(query, limit = 24) {
+  const searchResults = await ytSearch({ query: `${query.trim()} audio`, page: 1 });
   const videos = (searchResults.videos || []).slice(0, limit);
 
   return videos.map(video => ({
-    id: `youtube_${video.videoId}`,
+    id: `track_${video.videoId}`,
     originalId: video.videoId,
     title: video.title,
-    artist: video.author?.name || 'YouTube Music',
-    album: 'YouTube Music',
+    artist: video.author?.name || 'Artist',
+    album: 'Single',
     duration: video.seconds || 0,
     thumbnailUrl: video.thumbnail || video.image,
-    source: 'youtube',
-    youtubeUrl: video.url
+    source: 'stream'
   }));
 }
 
 /**
- * Unified YouTube search: Uses official API if key provided, falls back to scraper
+ * Unified Search
  */
 export async function searchYouTube(query, limit = 24) {
   if (!query || !query.trim()) return [];
 
   if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'your_youtube_api_key_here') {
     try {
-      const results = await searchYouTubeViaApi(query, limit);
+      const results = await searchViaApi(query, limit);
       if (results.length > 0) return results;
-    } catch (err) {
-      console.warn('YouTube API call failed, falling back to scraper:', err.response?.data?.error?.message || err.message);
-    }
+    } catch (err) {}
   }
 
   try {
-    return await searchYouTubeViaScraper(query, limit);
+    return await searchViaScraper(query, limit);
   } catch (err) {
-    console.error('YouTube scraper search failed:', err.message);
     return [];
   }
 }
 
+const TRENDING_POOLS = [
+  { title: 'Aditya Rikhari & Anuv Jain Essentials', query: 'Aditya Rikhari Anuv Jain' },
+  { title: 'Top Global Viral Chartbusters', query: 'popular hits music 2024' },
+  { title: 'Indie Vibes & Acoustic Hits', query: 'Aditya Rikhari Prateek Kuhad Anuv Jain' },
+  { title: 'Trending Bollywood Chartbusters', query: 'Arijit Singh Pritam Bollywood Hits' },
+  { title: 'Global Pop & Billboard Top 50', query: 'billboard hot 100 music hits' },
+  { title: 'Late Night Chill & Lo-Fi Beats', query: 'lofi chill beats study sleep' },
+  { title: 'High-Energy Punjabi Waves', query: 'Punjabi Top Hits AP Dhillon Karan Aujla' },
+  { title: 'Acoustic Soul & Melodies', query: 'acoustic songs unplugged hits' }
+];
+
 /**
- * Get YouTube Trending / Popular Music tracks
+ * Get Dynamic Trending Mix that rotates on every refresh
  */
 export async function getYouTubeTrending(limit = 24) {
-  if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'your_youtube_api_key_here') {
-    try {
-      const res = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-        params: {
-          key: YOUTUBE_API_KEY,
-          part: 'snippet,contentDetails',
-          chart: 'mostPopular',
-          videoCategoryId: '10', // Music
-          maxResults: limit
-        },
-        timeout: 6000
-      });
+  const selectedPool = TRENDING_POOLS[Math.floor(Math.random() * TRENDING_POOLS.length)];
+  const tracks = await searchYouTube(selectedPool.query, limit);
 
-      const items = res.data?.items || [];
-      if (items.length > 0) {
-        return items.map(item => ({
-          id: `youtube_${item.id}`,
-          originalId: item.id,
-          title: item.snippet?.title,
-          artist: item.snippet?.channelTitle || 'YouTube Music',
-          album: 'Trending Hits',
-          duration: parseIsoDuration(item.contentDetails?.duration),
-          thumbnailUrl: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url,
-          source: 'youtube',
-          youtubeUrl: `https://www.youtube.com/watch?v=${item.id}`
-        }));
-      }
-    } catch (err) {
-      console.warn('YouTube API trending failed, falling back to query:', err.response?.data?.error?.message || err.message);
-    }
-  }
-
-  const trendingQueries = [
-    'Aditya Rikhari Anuv Jain top hits',
-    'popular songs music hits',
-    'trending billboard music hot 100',
-    'trending pop hindi hits'
-  ];
-  const query = trendingQueries[Math.floor(Math.random() * trendingQueries.length)];
-  return await searchYouTube(query, limit);
+  return {
+    sectionTitle: selectedPool.title,
+    tracks
+  };
 }

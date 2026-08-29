@@ -5,15 +5,16 @@ import TrackCard from './TrackCard';
 import { 
   Flame, 
   Play, 
-  Youtube,
+  Radio,
   Zap,
   TrendingUp,
-  Music2
+  Music2,
+  Sparkles
 } from 'lucide-react';
 
 export default function HomeView({ onSearchGenre }) {
   const { playTrack } = useAudioPlayer();
-  const [trendingData, setTrendingData] = useState({ youtube: [], featured: [] });
+  const [trendingData, setTrendingData] = useState({ sectionTitle: 'Trending Hits', tracks: [], featured: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [activeMood, setActiveMood] = useState('All');
 
@@ -22,7 +23,7 @@ export default function HomeView({ onSearchGenre }) {
     { label: 'Aditya Rikhari & Anuv Jain', query: 'Aditya Rikhari Anuv Jain' },
     { label: 'Aditya Rikhari Hits', query: 'Aditya Rikhari' },
     { label: 'Anuv Jain Essentials', query: 'Anuv Jain' },
-    { label: 'Trending Hits', query: 'Trending Songs 2024' },
+    { label: 'Trending Hindi', query: 'Arijit Singh Pritam Bollywood Hits' },
     { label: 'Global Pop', query: 'Global Billboard Hot 100' },
     { label: 'Chill & Lofi', query: 'Lofi Chill Beats' },
     { label: 'Punjabi Hits', query: 'Punjabi Top Hits AP Dhillon' }
@@ -55,7 +56,7 @@ export default function HomeView({ onSearchGenre }) {
     }
   };
 
-  const featuredTrack = trendingData.featured?.[0] || trendingData.youtube?.[0];
+  const featuredTrack = trendingData.featured?.[0] || trendingData.tracks?.[0];
 
   return (
     <div className="content-scrollable">
@@ -68,14 +69,14 @@ export default function HomeView({ onSearchGenre }) {
             gap: '0.5rem',
             padding: '0.35rem 0.85rem',
             borderRadius: 'var(--radius-full)',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.35)',
-            color: '#ef4444',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: 'var(--accent-emerald)',
             fontSize: '0.78rem',
             fontWeight: 700,
             marginBottom: '1.25rem'
           }}>
-            <Youtube size={14} /> ZERO DATABASE • PURE YOUTUBE MUSIC AGGREGATOR
+            <Zap size={14} /> ZERO DATABASE • STATELESS AUDIO PLAYER
           </div>
 
           <h1 style={{
@@ -87,7 +88,7 @@ export default function HomeView({ onSearchGenre }) {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Pure YouTube Audio & Music Streaming.
+            High-Fidelity Music Streaming.
           </h1>
 
           <p style={{
@@ -96,13 +97,13 @@ export default function HomeView({ onSearchGenre }) {
             marginBottom: '2rem',
             lineHeight: 1.6
           }}>
-            Stream any song, album, cover, and live concert from YouTube Music seamlessly with zero authentication and zero login walls.
+            Stream any song, artist, album, and live performance seamlessly with zero login walls and instant playback.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             {featuredTrack && (
               <button
-                onClick={() => playTrack(featuredTrack, trendingData.featured || trendingData.youtube)}
+                onClick={() => playTrack(featuredTrack, trendingData.tracks || trendingData.featured)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -177,28 +178,32 @@ export default function HomeView({ onSearchGenre }) {
         ))}
       </div>
 
-      {/* Section 1: Trending on YouTube Music */}
+      {/* Section 1: Dynamic Trending & Discovery Mix (Rotates on Refresh) */}
       <div style={{ marginBottom: '3.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Flame size={18} color="#ef4444" />
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Flame size={18} color="var(--accent-emerald)" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>Trending on YouTube Music</h2>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Global viral hits and trending tracks</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>
+                {trendingData.sectionTitle || 'Trending Hits Today'}
+              </h2>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Fresh discovery mix • Refreshes with new tracks
+              </span>
             </div>
           </div>
         </div>
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-            Loading YouTube Music tracks...
+            Loading tracks...
           </div>
         ) : (
           <div className="track-grid">
-            {(trendingData.youtube || []).map(track => (
-              <TrackCard key={track.id} track={track} trackList={trendingData.youtube} />
+            {(trendingData.tracks || []).map(track => (
+              <TrackCard key={track.id} track={track} trackList={trendingData.tracks} />
             ))}
           </div>
         )}

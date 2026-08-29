@@ -1,12 +1,12 @@
 /**
- * API Service Client for StreamSync YouTube Backend
+ * API Service Client for StreamSync Backend
  */
 
 const API_BASE = '/api';
 
 export const apiService = {
   /**
-   * YouTube Music Search
+   * Search Music
    */
   search: async (query, limit = 24) => {
     if (!query || !query.trim()) return [];
@@ -16,13 +16,13 @@ export const apiService = {
       const data = await res.json();
       return data.results || [];
     } catch (err) {
-      console.error('YouTube search error:', err);
+      console.error('Search error:', err);
       return [];
     }
   },
 
   /**
-   * Get Trending & Featured YouTube Music
+   * Get Dynamic Trending & Discovery Mix
    */
   getTrending: async () => {
     try {
@@ -30,8 +30,8 @@ export const apiService = {
       if (!res.ok) throw new Error('Failed to fetch trending');
       return await res.json();
     } catch (err) {
-      console.error('YouTube trending error:', err);
-      return { youtube: [], featured: [], trending: [] };
+      console.error('Trending error:', err);
+      return { sectionTitle: 'Trending Hits', tracks: [], featured: [] };
     }
   },
 

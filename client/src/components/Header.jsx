@@ -3,11 +3,11 @@ import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { Search, X, ListMusic, Youtube } from 'lucide-react';
 
 export default function Header({ searchQuery, onSearchChange }) {
-  const { 
-    isQueueOpen, 
-    setIsQueueOpen, 
-    queue, 
-    setActiveTab 
+  const {
+    isQueueOpen,
+    setIsQueueOpen,
+    queue,
+    setActiveTab
   } = useAudioPlayer();
 
   const [localQuery, setLocalQuery] = useState(searchQuery || '');
@@ -86,22 +86,6 @@ export default function Header({ searchQuery, onSearchChange }) {
               <X size={16} />
             </button>
           )}
-        </div>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          padding: '0.45rem 0.85rem',
-          borderRadius: 'var(--radius-full)',
-          background: 'rgba(239, 68, 68, 0.12)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          color: '#ef4444',
-          fontSize: '0.78rem',
-          fontWeight: 700
-        }}>
-          <Youtube size={14} />
-          <span>YouTube Music</span>
         </div>
       </div>
 

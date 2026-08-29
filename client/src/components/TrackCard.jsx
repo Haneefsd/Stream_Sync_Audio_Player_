@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
-import { formatTime, getSourceBadge, truncateText } from '../utils/formatters';
-import { Play, Pause, Heart, MoreVertical, Plus, ListPlus, Radio } from 'lucide-react';
+import { formatTime, getSourceBadge } from '../utils/formatters';
+import { Play, Pause, Heart, MoreVertical, ListPlus, FolderPlus } from 'lucide-react';
 
 export default function TrackCard({ track, trackList = null }) {
-  const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue } = useAudioPlayer();
+  const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue, openAddToPlaylist } = useAudioPlayer();
   const [isLiked, setIsLiked] = useState(storageService.isFavorite(track.id));
   const [showMenu, setShowMenu] = useState(false);
 
@@ -32,6 +32,12 @@ export default function TrackCard({ track, trackList = null }) {
     e.stopPropagation();
     addToQueue(track);
     setShowMenu(false);
+  };
+
+  const handleOpenPlaylistModal = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    if (openAddToPlaylist) openAddToPlaylist(track);
   };
 
   return (
@@ -134,12 +140,33 @@ export default function TrackCard({ track, trackList = null }) {
                 border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '0.4rem',
-                minWidth: '140px',
+                minWidth: '150px',
                 zIndex: 30,
-                boxShadow: 'var(--shadow-md)'
+                boxShadow: 'var(--shadow-md)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem'
               }}
               onClick={(e) => e.stopPropagation()}
             >
+              <button
+                onClick={handleOpenPlaylistModal}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.6rem',
+                  fontSize: '0.78rem',
+                  color: 'var(--text-primary)',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <FolderPlus size={14} color="var(--accent-emerald)" /> Add to Playlist
+              </button>
+
               <button
                 onClick={handleAddToQueue}
                 style={{

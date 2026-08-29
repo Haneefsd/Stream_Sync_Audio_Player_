@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AudioPlayerContext } from './AudioPlayerContext';
 import { storageService } from '../services/storage';
+import AddToPlaylistModal from '../components/AddToPlaylistModal';
 
 export const AudioPlayerProvider = ({ children }) => {
   const initialSettings = storageService.getSettings();
@@ -18,18 +19,28 @@ export const AudioPlayerProvider = ({ children }) => {
   // Queue & Modes
   const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off');
+  const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off'); // 'off' | 'all' | 'one'
   const [shuffle, setShuffle] = useState(initialSettings.shuffle || false);
 
   // Modals & Tabs
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [playlistModalTrack, setPlaylistModalTrack] = useState(null);
 
   // References
   const ytPlayerRef = useRef(null);
   const isYtReadyRef = useRef(false);
   const ytTimeIntervalRef = useRef(null);
+  const queueRef = useRef(queue);
+  const currentIndexRef = useRef(currentIndex);
+  const repeatModeRef = useRef(repeatMode);
+  const shuffleRef = useRef(shuffle);
+
+  useEffect(() => { queueRef.current = queue; }, [queue]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
+  useEffect(() => { shuffleRef.current = shuffle; }, [shuffle]);
 
   // Initialize YouTube IFrame API once
   useEffect(() => {
@@ -98,21 +109,25 @@ export const AudioPlayerProvider = ({ children }) => {
             } else if (event.data === 3) {
               setIsBuffering(true);
             } else if (event.data === 0) {
+              // Song Ended -> Automaticaly play the next song in the playlist/queue
               handleNextTrack(true);
             }
           },
           onError: (e) => {
             setIsBuffering(false);
-            console.warn('[YouTube Player] Error event:', e);
+            // On error, auto-advance to next song
+            setTimeout(() => {
+              handleNextTrack(false);
+            }, 1000);
           }
         }
       });
     } catch (err) {
-      console.warn('[YouTube Player] Init error:', err);
+      console.warn('Player init error:', err);
     }
   };
 
-  // YouTube time tracking loop
+  // Time tracking loop
   useEffect(() => {
     if (isPlaying) {
       if (!ytTimeIntervalRef.current) {
@@ -125,7 +140,7 @@ export const AudioPlayerProvider = ({ children }) => {
               if (dur > 0) setDuration(dur);
             } catch {}
           }
-        }, 300);
+        }, 250);
       }
     } else {
       if (ytTimeIntervalRef.current) {
@@ -145,9 +160,9 @@ export const AudioPlayerProvider = ({ children }) => {
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
       navigator.mediaSession.metadata = new window.MediaMetadata({
-        title: currentTrack.title || 'YouTube Track',
-        artist: currentTrack.artist || 'YouTube Artist',
-        album: currentTrack.album || 'YouTube Music',
+        title: currentTrack.title || 'Track',
+        artist: currentTrack.artist || 'Artist',
+        album: currentTrack.album || 'StreamSync',
         artwork: [
           { src: currentTrack.thumbnailUrl || '/icon.png', sizes: '512x512', type: 'image/jpeg' }
         ]
@@ -163,8 +178,8 @@ export const AudioPlayerProvider = ({ children }) => {
     }
   }, [currentTrack]);
 
-  // Play a YouTube track
-  const playTrack = useCallback(async (track, newQueue = null) => {
+  // Play a track
+  const playTrack = useCallback((track, newQueue = null) => {
     if (!track) return;
 
     const videoId = track.originalId || track.id?.replace('youtube_', '');
@@ -186,7 +201,7 @@ export const AudioPlayerProvider = ({ children }) => {
         setIsBuffering(false);
         storageService.addToHistory(track);
       } catch (err) {
-        console.warn('[YouTube Player] loadVideoById error:', err);
+        console.warn('Playback error:', err);
       }
     } else {
       setTimeout(() => {
@@ -196,10 +211,10 @@ export const AudioPlayerProvider = ({ children }) => {
           setIsPlaying(true);
           storageService.addToHistory(track);
         }
-      }, 600);
+      }, 500);
     }
 
-    if (newQueue) {
+    if (newQueue && Array.isArray(newQueue) && newQueue.length > 0) {
       setQueue(newQueue);
       const idx = newQueue.findIndex(t => t.id === track.id);
       setCurrentIndex(idx >= 0 ? idx : 0);
@@ -230,32 +245,38 @@ export const AudioPlayerProvider = ({ children }) => {
     }
   };
 
-  // Next Track
+  // Next Track - Automatically loops and plays next song
   const handleNextTrack = (isAutoEnded = false) => {
-    if (repeatMode === 'one' && isAutoEnded) {
+    const curQueue = queueRef.current;
+    const curIdx = currentIndexRef.current;
+    const curRepeat = repeatModeRef.current;
+    const curShuffle = shuffleRef.current;
+
+    if (curRepeat === 'one' && isAutoEnded) {
       seekTo(0);
-      togglePlay();
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === 'function') {
+        ytPlayerRef.current.playVideo();
+      }
       return;
     }
 
-    if (queue.length === 0) return;
+    if (!curQueue || curQueue.length === 0) return;
 
-    if (shuffle) {
-      const randomIndex = Math.floor(Math.random() * queue.length);
+    if (curShuffle) {
+      const randomIndex = Math.floor(Math.random() * curQueue.length);
       setCurrentIndex(randomIndex);
-      playTrack(queue[randomIndex]);
+      playTrack(curQueue[randomIndex], curQueue);
       return;
     }
 
-    if (currentIndex < queue.length - 1) {
-      const nextIdx = currentIndex + 1;
+    if (curIdx < curQueue.length - 1) {
+      const nextIdx = curIdx + 1;
       setCurrentIndex(nextIdx);
-      playTrack(queue[nextIdx]);
-    } else if (repeatMode === 'all') {
-      setCurrentIndex(0);
-      playTrack(queue[0]);
+      playTrack(curQueue[nextIdx], curQueue);
     } else {
-      setIsPlaying(false);
+      // Loop back to the beginning of the playlist/queue
+      setCurrentIndex(0);
+      playTrack(curQueue[0], curQueue);
     }
   };
 
@@ -266,15 +287,17 @@ export const AudioPlayerProvider = ({ children }) => {
       return;
     }
 
-    if (queue.length === 0) return;
+    const curQueue = queueRef.current;
+    const curIdx = currentIndexRef.current;
+    if (!curQueue || curQueue.length === 0) return;
 
-    if (currentIndex > 0) {
-      const prevIdx = currentIndex - 1;
+    if (curIdx > 0) {
+      const prevIdx = curIdx - 1;
       setCurrentIndex(prevIdx);
-      playTrack(queue[prevIdx]);
+      playTrack(curQueue[prevIdx], curQueue);
     } else {
-      playTrack(queue[queue.length - 1]);
-      setCurrentIndex(queue.length - 1);
+      playTrack(curQueue[curQueue.length - 1], curQueue);
+      setCurrentIndex(curQueue.length - 1);
     }
   };
 
@@ -360,6 +383,10 @@ export const AudioPlayerProvider = ({ children }) => {
     }
   };
 
+  const openAddToPlaylist = (track) => {
+    setPlaylistModalTrack(track);
+  };
+
   return (
     <AudioPlayerContext.Provider
       value={{
@@ -394,10 +421,19 @@ export const AudioPlayerProvider = ({ children }) => {
         clearQueue,
         setIsFullscreenPlayerOpen,
         setIsQueueOpen,
-        setActiveTab
+        setActiveTab,
+        openAddToPlaylist
       }}
     >
       {children}
+
+      {/* Add To Playlist Modal */}
+      {playlistModalTrack && (
+        <AddToPlaylistModal
+          track={playlistModalTrack}
+          onClose={() => setPlaylistModalTrack(null)}
+        />
+      )}
     </AudioPlayerContext.Provider>
   );
 };

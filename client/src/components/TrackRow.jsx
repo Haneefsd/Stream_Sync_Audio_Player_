@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
 import { formatTime, getSourceBadge } from '../utils/formatters';
-import { Play, Pause, Heart, ListPlus, Trash2 } from 'lucide-react';
+import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2 } from 'lucide-react';
 
 export default function TrackRow({ track, index, trackList = null, onRemove = null }) {
-  const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue } = useAudioPlayer();
+  const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue, openAddToPlaylist } = useAudioPlayer();
   const [isLiked, setIsLiked] = useState(storageService.isFavorite(track.id));
 
   const isCurrent = currentTrack?.id === track.id;
@@ -29,6 +29,11 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
   const handleAddToQueue = (e) => {
     e.stopPropagation();
     addToQueue(track);
+  };
+
+  const handleAddToPlaylist = (e) => {
+    e.stopPropagation();
+    if (openAddToPlaylist) openAddToPlaylist(track);
   };
 
   return (
@@ -101,6 +106,14 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
           title={isLiked ? 'Unlike' : 'Like'}
         >
           <Heart size={15} fill={isLiked ? 'var(--accent-pink)' : 'none'} />
+        </button>
+
+        <button
+          onClick={handleAddToPlaylist}
+          style={{ color: 'var(--text-muted)', padding: '2px' }}
+          title="Add to Playlist"
+        >
+          <FolderPlus size={15} />
         </button>
 
         <button

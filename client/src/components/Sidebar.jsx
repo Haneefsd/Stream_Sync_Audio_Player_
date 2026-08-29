@@ -9,10 +9,8 @@ import {
   PlusSquare, 
   Music, 
   Radio, 
-  Zap,
   CheckCircle2,
-  Trash2,
-  Youtube
+  Trash2
 } from 'lucide-react';
 
 export default function Sidebar({ onSelectPlaylist }) {
@@ -43,7 +41,7 @@ export default function Sidebar({ onSelectPlaylist }) {
 
   const navItems = [
     { id: 'home', label: 'Home & Explore', icon: Home },
-    { id: 'search', label: 'Search YouTube', icon: Search },
+    { id: 'search', label: 'Search Music', icon: Search },
     { id: 'library', label: 'Your Library', icon: Library },
     { id: 'favorites', label: 'Liked Songs', icon: Heart }
   ];
@@ -65,20 +63,20 @@ export default function Sidebar({ onSelectPlaylist }) {
           width: '38px',
           height: '38px',
           borderRadius: '10px',
-          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          background: 'linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-cyan) 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
+          boxShadow: '0 0 15px var(--accent-emerald-glow)'
         }}>
-          <Youtube size={22} color="#fff" strokeWidth={2.5} />
+          <Radio size={22} color="#000" strokeWidth={2.5} />
         </div>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             StreamSync
           </h2>
-          <span style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, letterSpacing: '0.04em' }}>
-            YOUTUBE MUSIC
+          <span style={{ fontSize: '0.68rem', color: 'var(--accent-emerald)', fontWeight: 700, letterSpacing: '0.04em' }}>
+            STATELESS AUDIO
           </span>
         </div>
       </div>
@@ -197,8 +195,8 @@ export default function Sidebar({ onSelectPlaylist }) {
           padding: '0.4rem 0.6rem',
           borderRadius: 'var(--radius-sm)'
         }}>
-          <CheckCircle2 size={13} color="#ef4444" />
-          <span>Zero Database • Pure YouTube API</span>
+          <CheckCircle2 size={13} color="var(--accent-emerald)" />
+          <span>Zero Database • Pure Client</span>
         </div>
       </div>
     </aside>

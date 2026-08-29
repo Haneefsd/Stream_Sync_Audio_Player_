@@ -1,5 +1,5 @@
 /**
- * Time and formatting utilities for StreamSync YouTube Music Player
+ * Time and formatting utilities for StreamSync Audio Player
  */
 
 export function formatTime(seconds) {
@@ -10,7 +10,7 @@ export function formatTime(seconds) {
 }
 
 export function getSourceBadge(source) {
-  return { label: 'YouTube Music', className: 'badge-youtube' };
+  return { label: 'HD Audio', className: 'badge-music' };
 }
 
 export function truncateText(text, maxLength = 35) {

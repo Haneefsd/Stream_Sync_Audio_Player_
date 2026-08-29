@@ -1,7 +1,7 @@
 import { searchYouTube, getYouTubeTrending } from '../services/youtubeService.js';
 
 /**
- * YouTube search handler
+ * Search handler
  */
 export async function searchHandler(req, res) {
   try {
@@ -16,31 +16,30 @@ export async function searchHandler(req, res) {
 
     return res.json({
       query,
-      source: 'youtube',
       count: results.length,
       results
     });
   } catch (err) {
-    console.error('YouTube search error:', err);
+    console.error('Search error:', err);
     return res.status(500).json({ error: 'Failed to process search request', details: err.message });
   }
 }
 
 /**
- * YouTube Trending / Discovery handler
+ * Dynamic Trending / Discovery handler - changes on every refresh
  */
 export async function trendingHandler(req, res) {
   try {
     const limit = parseInt(req.query.limit, 10) || 24;
-    const youtube = await getYouTubeTrending(limit);
+    const trendingData = await getYouTubeTrending(limit);
 
     return res.json({
-      youtube,
-      featured: youtube.slice(0, 8),
-      trending: youtube
+      sectionTitle: trendingData.sectionTitle || 'Trending Hits Today',
+      tracks: trendingData.tracks || [],
+      featured: (trendingData.tracks || []).slice(0, 8)
     });
   } catch (err) {
-    console.error('YouTube trending error:', err);
+    console.error('Trending error:', err);
     return res.status(500).json({ error: 'Failed to fetch trending tracks' });
   }
 }
