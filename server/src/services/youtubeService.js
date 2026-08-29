@@ -22,24 +22,24 @@ function parseIsoDuration(durationStr) {
 /**
  * Search tracks using official YouTube Data API v3
  */
-async function searchYouTubeViaApi(query, limit = 20) {
+async function searchYouTubeViaApi(query, limit = 24) {
   const searchUrl = 'https://www.googleapis.com/youtube/v3/search';
   const res = await axios.get(searchUrl, {
     params: {
       key: YOUTUBE_API_KEY,
       part: 'snippet',
-      q: `${query.trim()} audio`,
+      q: `${query.trim()}`,
       type: 'video',
-      videoCategoryId: '10', // Music category
+      videoCategoryId: '10', // Music Category
       maxResults: limit
     },
-    timeout: 5000
+    timeout: 6000
   });
 
   const items = res.data?.items || [];
   if (items.length === 0) return [];
 
-  // Fetch duration and content details
+  // Fetch duration and high-res details
   const videoIds = items.map(i => i.id?.videoId).filter(Boolean).join(',');
   let durationMap = {};
 
@@ -50,7 +50,7 @@ async function searchYouTubeViaApi(query, limit = 20) {
         part: 'contentDetails,snippet',
         id: videoIds
       },
-      timeout: 5000
+      timeout: 6000
     });
 
     (detailsRes.data?.items || []).forEach(item => {
@@ -76,8 +76,6 @@ async function searchYouTubeViaApi(query, limit = 20) {
       duration: durationMap[videoId] || 0,
       thumbnailUrl: thumbnail,
       source: 'youtube',
-      maxBitrate: '160 kbps',
-      streamUrl: `/api/stream?id=${videoId}`,
       youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`
     };
   });
@@ -86,8 +84,8 @@ async function searchYouTubeViaApi(query, limit = 20) {
 /**
  * Fallback search using yt-search scraper
  */
-async function searchYouTubeViaScraper(query, limit = 20) {
-  const searchResults = await ytSearch({ query: `${query.trim()} audio`, page: 1 });
+async function searchYouTubeViaScraper(query, limit = 24) {
+  const searchResults = await ytSearch({ query: `${query.trim()} music`, page: 1 });
   const videos = (searchResults.videos || []).slice(0, limit);
 
   return videos.map(video => ({
@@ -95,12 +93,10 @@ async function searchYouTubeViaScraper(query, limit = 20) {
     originalId: video.videoId,
     title: video.title,
     artist: video.author?.name || 'YouTube Music',
-    album: 'YouTube Single',
+    album: 'YouTube Music',
     duration: video.seconds || 0,
     thumbnailUrl: video.thumbnail || video.image,
     source: 'youtube',
-    maxBitrate: '160 kbps',
-    streamUrl: `/api/stream?id=${video.videoId}`,
     youtubeUrl: video.url
   }));
 }
@@ -108,7 +104,7 @@ async function searchYouTubeViaScraper(query, limit = 20) {
 /**
  * Unified YouTube search: Uses official API if key provided, falls back to scraper
  */
-export async function searchYouTube(query, limit = 20) {
+export async function searchYouTube(query, limit = 24) {
   if (!query || !query.trim()) return [];
 
   if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'your_youtube_api_key_here') {
@@ -131,7 +127,7 @@ export async function searchYouTube(query, limit = 20) {
 /**
  * Get YouTube Trending / Popular Music tracks
  */
-export async function getYouTubeTrending(limit = 20) {
+export async function getYouTubeTrending(limit = 24) {
   if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'your_youtube_api_key_here') {
     try {
       const res = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
@@ -142,7 +138,7 @@ export async function getYouTubeTrending(limit = 20) {
           videoCategoryId: '10', // Music
           maxResults: limit
         },
-        timeout: 5000
+        timeout: 6000
       });
 
       const items = res.data?.items || [];
@@ -156,8 +152,6 @@ export async function getYouTubeTrending(limit = 20) {
           duration: parseIsoDuration(item.contentDetails?.duration),
           thumbnailUrl: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url,
           source: 'youtube',
-          maxBitrate: '160 kbps',
-          streamUrl: `/api/stream?id=${item.id}`,
           youtubeUrl: `https://www.youtube.com/watch?v=${item.id}`
         }));
       }
@@ -167,10 +161,10 @@ export async function getYouTubeTrending(limit = 20) {
   }
 
   const trendingQueries = [
-    'top hits music 2024',
-    'trending songs billboard',
-    'popular songs global playlist',
-    'trending pop hindi songs'
+    'Aditya Rikhari Anuv Jain top hits',
+    'popular songs music hits',
+    'trending billboard music hot 100',
+    'trending pop hindi hits'
   ];
   const query = trendingQueries[Math.floor(Math.random() * trendingQueries.length)];
   return await searchYouTube(query, limit);

@@ -1,23 +1,24 @@
 import axios from 'axios';
-import { getJioSaavnLyrics, searchJioSaavn } from './jiosaavnService.js';
 
 /**
- * Fetch synced (LRC) and plain lyrics for a track using LRCLIB + sumitkolhe/jiosaavn-api fallback
+ * Fetch synced (LRC) and plain lyrics for a YouTube track using LRCLIB
  */
 export async function getLyrics(trackName, artistName, duration = null) {
   if (!trackName) return null;
 
   const cleanTitle = trackName
-    .replace(/\(.*?\)|\[.*?\]/g, '') // remove parenthetical info like (Official Video), [feat. ...], etc.
+    .replace(/\(.*?\)|\[.*?\]/g, '')
+    .replace(/official video|music video|lyric video|audio|full song|video song|hd|4k/gi, '')
     .replace(/ft\..*|feat\..*/i, '')
     .trim();
 
   const cleanArtist = (artistName || '')
     .split(',')[0]
+    .replace(/vevo|official|channel|records|music/gi, '')
     .replace(/ft\..*|feat\..*/i, '')
     .trim();
 
-  // 1. Try direct match with LRCLIB (for synchronized karaoke-style scrolling lyrics)
+  // 1. Try direct match with LRCLIB
   try {
     const params = {
       track_name: cleanTitle,
@@ -74,37 +75,14 @@ export async function getLyrics(trackName, artistName, duration = null) {
       };
     }
   } catch (err) {
-    // Fallback to JioSaavn API
-  }
-
-  // 3. Fallback to sumitkolhe/jiosaavn-api lyrics
-  try {
-    const saavnSongs = await searchJioSaavn(`${cleanTitle} ${cleanArtist}`, 1);
-    if (saavnSongs.length > 0 && saavnSongs[0].originalId) {
-      const saavnLyrics = await getJioSaavnLyrics(saavnSongs[0].originalId);
-      if (saavnLyrics && saavnLyrics.lyrics) {
-        return {
-          id: saavnSongs[0].originalId,
-          trackName: saavnSongs[0].title,
-          artistName: saavnSongs[0].artist,
-          syncedLyrics: [],
-          rawSyncedLyrics: null,
-          plainLyrics: saavnLyrics.lyrics.replace(/<br\s*[\/]?>/gi, '\n'),
-          isSynced: false,
-          snippet: saavnLyrics.snippet,
-          copyright: saavnLyrics.copyright
-        };
-      }
-    }
-  } catch (err) {
-    // Return null if not found
+    // No lyrics available
   }
 
   return null;
 }
 
 /**
- * Parses raw LRC string into array of timestamped lines: [{ time: 12.5, text: "Line text" }]
+ * Parses raw LRC string into array of timestamped lines
  */
 function parseLrcLyrics(lrcText) {
   if (!lrcText) return [];

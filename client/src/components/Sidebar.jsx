@@ -9,21 +9,16 @@ import {
   PlusSquare, 
   Music, 
   Radio, 
-  Layers, 
-  Settings, 
-  Sparkles,
   Zap,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Youtube
 } from 'lucide-react';
 
 export default function Sidebar({ onSelectPlaylist }) {
   const { 
     activeTab, 
-    setActiveTab, 
-    setIsSpotifyModalOpen, 
-    audioQuality, 
-    setAudioQuality 
+    setActiveTab
   } = useAudioPlayer();
 
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
@@ -48,7 +43,7 @@ export default function Sidebar({ onSelectPlaylist }) {
 
   const navItems = [
     { id: 'home', label: 'Home & Explore', icon: Home },
-    { id: 'search', label: 'Search Music', icon: Search },
+    { id: 'search', label: 'Search YouTube', icon: Search },
     { id: 'library', label: 'Your Library', icon: Library },
     { id: 'favorites', label: 'Liked Songs', icon: Heart }
   ];
@@ -70,20 +65,20 @@ export default function Sidebar({ onSelectPlaylist }) {
           width: '38px',
           height: '38px',
           borderRadius: '10px',
-          background: 'linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-cyan) 100%)',
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 15px var(--accent-emerald-glow)'
+          boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
         }}>
-          <Radio size={22} color="#000" strokeWidth={2.5} />
+          <Youtube size={22} color="#fff" strokeWidth={2.5} />
         </div>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             StreamSync
           </h2>
-          <span style={{ fontSize: '0.68rem', color: 'var(--accent-emerald)', fontWeight: 600, letterSpacing: '0.04em' }}>
-            STATELESS AUDIO
+          <span style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, letterSpacing: '0.04em' }}>
+            YOUTUBE MUSIC
           </span>
         </div>
       </div>
@@ -116,35 +111,6 @@ export default function Sidebar({ onSelectPlaylist }) {
           );
         })}
       </nav>
-
-      {/* Spotify Resolver Quick Button */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <button
-          onClick={() => setIsSpotifyModalOpen(true)}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.85rem 1rem',
-            background: 'linear-gradient(135deg, rgba(29, 185, 84, 0.15) 0%, rgba(29, 185, 84, 0.05) 100%)',
-            border: '1px solid rgba(29, 185, 84, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: '#1db954',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <Sparkles size={18} />
-            <span>Import Spotify</span>
-          </div>
-          <span style={{ fontSize: '0.65rem', background: '#1db954', color: '#000', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
-            AUTO
-          </span>
-        </button>
-      </div>
 
       {/* Custom Playlists Section */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -219,32 +185,8 @@ export default function Sidebar({ onSelectPlaylist }) {
         </div>
       </div>
 
-      {/* Bottom Audio Quality & Zero DB Indicator */}
+      {/* Bottom Zero DB Indicator */}
       <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Zap size={13} color="var(--accent-emerald)" /> Stream Quality
-          </span>
-          <select
-            value={audioQuality}
-            onChange={(e) => setAudioQuality(e.target.value)}
-            style={{
-              background: 'var(--bg-elevated)',
-              color: 'var(--accent-emerald)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '4px',
-              padding: '0.2rem 0.4rem',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            <option value="320kbps">320k Ultra</option>
-            <option value="160kbps">160k Normal</option>
-            <option value="96kbps">96k Data Saver</option>
-          </select>
-        </div>
-
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -255,8 +197,8 @@ export default function Sidebar({ onSelectPlaylist }) {
           padding: '0.4rem 0.6rem',
           borderRadius: 'var(--radius-sm)'
         }}>
-          <CheckCircle2 size={13} color="var(--accent-emerald)" />
-          <span>Zero Database • Pure Client</span>
+          <CheckCircle2 size={13} color="#ef4444" />
+          <span>Zero Database • Pure YouTube API</span>
         </div>
       </div>
     </aside>

@@ -15,23 +15,21 @@ import {
   Heart, 
   Maximize2, 
   ListMusic, 
-  FileText,
-  Activity
+  Activity,
+  Youtube
 } from 'lucide-react';
 
-export default function PlayerBar({ onOpenLyrics }) {
+export default function PlayerBar() {
   const { 
     currentTrack, 
     isPlaying, 
     isBuffering, 
     currentTime, 
     duration, 
-    bufferedTime, 
     volume, 
     isMuted, 
     repeatMode, 
     shuffle, 
-    audioQuality, 
     isQueueOpen,
     togglePlay, 
     handleNextTrack, 
@@ -76,7 +74,7 @@ export default function PlayerBar({ onOpenLyrics }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--bg-elevated)' }}></div>
           <div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Select a song to start streaming</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Select a YouTube song to start streaming</div>
           </div>
         </div>
       </div>
@@ -84,7 +82,6 @@ export default function PlayerBar({ onOpenLyrics }) {
   }
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const bufferPercent = duration > 0 ? (bufferedTime / duration) * 100 : 0;
   const badge = getSourceBadge(currentTrack.source);
 
   return (
@@ -245,7 +242,6 @@ export default function PlayerBar({ onOpenLyrics }) {
             className="slider-container"
             onClick={handleSeekClick}
           >
-            <div className="slider-buffer" style={{ width: `${bufferPercent}%` }}></div>
             <div className="slider-progress" style={{ width: `${progressPercent}%` }}></div>
             <div className="slider-thumb" style={{ left: `${progressPercent}%` }}></div>
           </div>
@@ -258,18 +254,6 @@ export default function PlayerBar({ onOpenLyrics }) {
 
       {/* 3. Right Volume & Tools Section */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.85rem' }}>
-        {/* Quality Indicator */}
-        <span style={{
-          fontSize: '0.68rem',
-          fontWeight: 700,
-          background: 'rgba(255, 255, 255, 0.08)',
-          padding: '0.2rem 0.5rem',
-          borderRadius: '4px',
-          color: 'var(--accent-emerald)'
-        }}>
-          {audioQuality}
-        </span>
-
         {/* Lyrics & Visualizer Fullscreen Trigger */}
         <button
           onClick={() => setIsFullscreenPlayerOpen(true)}

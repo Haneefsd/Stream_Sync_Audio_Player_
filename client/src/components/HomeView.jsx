@@ -2,31 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
 import TrackCard from './TrackCard';
-import TrackRow from './TrackRow';
 import { 
   Flame, 
-  Sparkles, 
   Play, 
-  Radio, 
-  Disc3, 
-  TrendingUp, 
-  Music2, 
-  Headphones,
-  Zap
+  Youtube,
+  Zap,
+  TrendingUp,
+  Music2
 } from 'lucide-react';
 
 export default function HomeView({ onSearchGenre }) {
-  const { playTrack, setIsSpotifyModalOpen } = useAudioPlayer();
-  const [trendingData, setTrendingData] = useState({ jiosaavn: [], youtube: [], featured: [] });
+  const { playTrack } = useAudioPlayer();
+  const [trendingData, setTrendingData] = useState({ youtube: [], featured: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [activeMood, setActiveMood] = useState('All');
 
   const moods = [
-    { label: 'All', query: 'Top Hits' },
+    { label: 'All', query: 'Top Hits Music' },
     { label: 'Aditya Rikhari & Anuv Jain', query: 'Aditya Rikhari Anuv Jain' },
     { label: 'Aditya Rikhari Hits', query: 'Aditya Rikhari' },
     { label: 'Anuv Jain Essentials', query: 'Anuv Jain' },
-    { label: 'Trending Hindi', query: 'Arijit Singh Pritam Bollywood Hits' },
+    { label: 'Trending Hits', query: 'Trending Songs 2024' },
     { label: 'Global Pop', query: 'Global Billboard Hot 100' },
     { label: 'Chill & Lofi', query: 'Lofi Chill Beats' },
     { label: 'Punjabi Hits', query: 'Punjabi Top Hits AP Dhillon' }
@@ -59,7 +55,7 @@ export default function HomeView({ onSearchGenre }) {
     }
   };
 
-  const featuredTrack = trendingData.featured?.[0] || trendingData.jiosaavn?.[0] || trendingData.youtube?.[0];
+  const featuredTrack = trendingData.featured?.[0] || trendingData.youtube?.[0];
 
   return (
     <div className="content-scrollable">
@@ -72,14 +68,14 @@ export default function HomeView({ onSearchGenre }) {
             gap: '0.5rem',
             padding: '0.35rem 0.85rem',
             borderRadius: 'var(--radius-full)',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            color: 'var(--accent-emerald)',
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#ef4444',
             fontSize: '0.78rem',
             fontWeight: 700,
             marginBottom: '1.25rem'
           }}>
-            <Zap size={14} /> ZERO DATABASE • MULTI-SOURCE AUDIO AGGREGATOR
+            <Youtube size={14} /> ZERO DATABASE • PURE YOUTUBE MUSIC AGGREGATOR
           </div>
 
           <h1 style={{
@@ -91,7 +87,7 @@ export default function HomeView({ onSearchGenre }) {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            High-Fidelity Audio Across All Platforms.
+            Pure YouTube Audio & Music Streaming.
           </h1>
 
           <p style={{
@@ -100,13 +96,13 @@ export default function HomeView({ onSearchGenre }) {
             marginBottom: '2rem',
             lineHeight: 1.6
           }}>
-            Stream JioSaavn (direct 320 kbps), YouTube Music, and import your Spotify playlists instantly with zero login walls.
+            Stream any song, album, cover, and live concert from YouTube Music seamlessly with zero authentication and zero login walls.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             {featuredTrack && (
               <button
-                onClick={() => playTrack(featuredTrack, trendingData.featured)}
+                onClick={() => playTrack(featuredTrack, trendingData.featured || trendingData.youtube)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -125,26 +121,6 @@ export default function HomeView({ onSearchGenre }) {
                 <span>Play Featured Track</span>
               </button>
             )}
-
-            <button
-              onClick={() => setIsSpotifyModalOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                padding: '0.85rem 1.5rem',
-                borderRadius: 'var(--radius-full)',
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid var(--border-strong)',
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                fontSize: '0.92rem'
-              }}
-            >
-              <Sparkles size={17} color="#1db954" />
-              <span>Import Spotify Link</span>
-            </button>
           </div>
         </div>
 
@@ -201,34 +177,7 @@ export default function HomeView({ onSearchGenre }) {
         ))}
       </div>
 
-      {/* Section 1: Trending on JioSaavn (320kbps Ultra Fidelity) */}
-      <div style={{ marginBottom: '3.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(43, 197, 180, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Disc3 size={18} color="var(--source-jiosaavn)" />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>Trending on JioSaavn</h2>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Direct 320 kbps high-bitrate audio streams</span>
-            </div>
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-            Loading high-fidelity tracks...
-          </div>
-        ) : (
-          <div className="track-grid">
-            {trendingData.jiosaavn.slice(0, 10).map(track => (
-              <TrackCard key={track.id} track={track} trackList={trendingData.jiosaavn} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Section 2: Trending on YouTube Music */}
+      {/* Section 1: Trending on YouTube Music */}
       <div style={{ marginBottom: '3.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -236,17 +185,23 @@ export default function HomeView({ onSearchGenre }) {
               <Flame size={18} color="#ef4444" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>Popular on YouTube Music</h2>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Global viral hits and trending audio streams</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>Trending on YouTube Music</h2>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Global viral hits and trending tracks</span>
             </div>
           </div>
         </div>
 
-        <div className="track-grid">
-          {trendingData.youtube.slice(0, 10).map(track => (
-            <TrackCard key={track.id} track={track} trackList={trendingData.youtube} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+            Loading YouTube Music tracks...
+          </div>
+        ) : (
+          <div className="track-grid">
+            {(trendingData.youtube || []).map(track => (
+              <TrackCard key={track.id} track={track} trackList={trendingData.youtube} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

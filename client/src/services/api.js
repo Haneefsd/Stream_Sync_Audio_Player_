@@ -1,51 +1,37 @@
 /**
- * API Service Client for StreamSync Backend
+ * API Service Client for StreamSync YouTube Backend
  */
 
 const API_BASE = '/api';
 
 export const apiService = {
   /**
-   * Multi-source Search (JioSaavn + YouTube)
+   * YouTube Music Search
    */
-  search: async (query, source = 'all', limit = 24) => {
+  search: async (query, limit = 24) => {
     if (!query || !query.trim()) return [];
     try {
-      const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&source=${source}&limit=${limit}`);
+      const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&limit=${limit}`);
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       return data.results || [];
     } catch (err) {
-      console.error('API search error:', err);
+      console.error('YouTube search error:', err);
       return [];
     }
   },
 
   /**
-   * Get Trending & Featured Charts
+   * Get Trending & Featured YouTube Music
    */
-  getTrending: async (language = 'hindi,english,punjabi') => {
+  getTrending: async () => {
     try {
-      const res = await fetch(`${API_BASE}/trending?language=${encodeURIComponent(language)}`);
+      const res = await fetch(`${API_BASE}/trending`);
       if (!res.ok) throw new Error('Failed to fetch trending');
       return await res.json();
     } catch (err) {
-      console.error('API trending error:', err);
-      return { jiosaavn: [], youtube: [], featured: [] };
-    }
-  },
-
-  /**
-   * Resolve Spotify Link (Track, Playlist, Album)
-   */
-  resolveSpotify: async (urlOrId) => {
-    try {
-      const res = await fetch(`${API_BASE}/resolve?url=${encodeURIComponent(urlOrId)}`);
-      if (!res.ok) throw new Error('Failed to resolve Spotify link');
-      return await res.json();
-    } catch (err) {
-      console.error('API spotify resolve error:', err);
-      throw err;
+      console.error('YouTube trending error:', err);
+      return { youtube: [], featured: [], trending: [] };
     }
   },
 
@@ -65,33 +51,5 @@ export const apiService = {
     } catch (err) {
       return null;
     }
-  },
-
-  /**
-   * Builds the stream URL based on track source and user preferences
-   */
-  getStreamUrl: (track, preferredQuality = '320kbps') => {
-    if (!track) return null;
-
-    if (track.source === 'jiosaavn') {
-      let rawUrl = track.streamUrl;
-      if (Array.isArray(track.downloadUrls) && track.downloadUrls.length > 0) {
-        const match = track.downloadUrls.find(d => d.quality === preferredQuality) ||
-                      track.downloadUrls.find(d => d.quality === '320kbps') ||
-                      track.downloadUrls.find(d => d.quality === '160kbps') ||
-                      track.downloadUrls[0];
-        if (match?.url) rawUrl = match.url;
-      }
-      return rawUrl || track.streamUrl || null;
-    }
-
-    if (track.source === 'youtube') {
-      const videoId = track.originalId || track.id?.replace('youtube_', '');
-      const title = encodeURIComponent(track.title || '');
-      const artist = encodeURIComponent(track.artist || '');
-      return `${API_BASE}/stream?id=${videoId}&title=${title}&artist=${artist}`;
-    }
-
-    return track.streamUrl || null;
   }
 };

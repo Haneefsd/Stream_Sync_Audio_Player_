@@ -1,5 +1,5 @@
 /**
- * Time and formatting utilities
+ * Time and formatting utilities for StreamSync YouTube Music Player
  */
 
 export function formatTime(seconds) {
@@ -10,16 +10,7 @@ export function formatTime(seconds) {
 }
 
 export function getSourceBadge(source) {
-  switch (source?.toLowerCase()) {
-    case 'jiosaavn':
-      return { label: 'JioSaavn 320k', className: 'badge-jiosaavn' };
-    case 'youtube':
-      return { label: 'YouTube', className: 'badge-youtube' };
-    case 'spotify':
-      return { label: 'Spotify', className: 'badge-spotify' };
-    default:
-      return { label: source || 'Stream', className: 'badge-jiosaavn' };
-  }
+  return { label: 'YouTube Music', className: 'badge-youtube' };
 }
 
 export function truncateText(text, maxLength = 35) {

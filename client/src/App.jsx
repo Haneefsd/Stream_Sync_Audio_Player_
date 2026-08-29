@@ -9,7 +9,6 @@ import LibraryView from './components/LibraryView';
 import PlayerBar from './components/PlayerBar';
 import QueueDrawer from './components/QueueDrawer';
 import FullscreenPlayer from './components/FullscreenPlayer';
-import SpotifyImportModal from './components/SpotifyImportModal';
 import PlaylistDetailModal from './components/PlaylistDetailModal';
 
 function MainApp() {
@@ -19,13 +18,10 @@ function MainApp() {
     isQueueOpen, 
     setIsQueueOpen, 
     isFullscreenPlayerOpen, 
-    setIsFullscreenPlayerOpen, 
-    isSpotifyModalOpen, 
-    setIsSpotifyModalOpen 
+    setIsFullscreenPlayerOpen 
   } = useAudioPlayer();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchSource, setSearchSource] = useState('all');
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   const handleSearchChange = (query) => {
@@ -50,8 +46,6 @@ function MainApp() {
         <Header 
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          searchSource={searchSource}
-          onSourceChange={(src) => setSearchSource(src)}
         />
 
         {/* View Switcher */}
@@ -62,7 +56,6 @@ function MainApp() {
         {activeTab === 'search' && (
           <SearchView 
             query={searchQuery} 
-            source={searchSource} 
           />
         )}
 
@@ -98,10 +91,6 @@ function MainApp() {
 
       {isFullscreenPlayerOpen && (
         <FullscreenPlayer onClose={() => setIsFullscreenPlayerOpen(false)} />
-      )}
-
-      {isSpotifyModalOpen && (
-        <SpotifyImportModal onClose={() => setIsSpotifyModalOpen(false)} />
       )}
 
       {selectedPlaylist && (

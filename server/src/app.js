@@ -22,7 +22,7 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'StreamSync Audio Engine',
+    service: 'StreamSync YouTube Music Engine',
     timestamp: new Date().toISOString()
   });
 });
@@ -48,7 +48,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🎵 StreamSync Stateless Audio Server listening on port ${PORT}`);
+  console.log(`🎵 StreamSync YouTube Audio Server listening on port ${PORT}`);
   console.log(`👉 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`👉 Unified search: http://localhost:${PORT}/api/search?q=Aditya+Rikhari+Anuv+Jain`);
+  console.log(`👉 YouTube search: http://localhost:${PORT}/api/search?q=Aditya+Rikhari+Anuv+Jain`);
 });

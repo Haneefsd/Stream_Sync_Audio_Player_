@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
-import { Search, X, ListMusic, Sparkles, Filter } from 'lucide-react';
+import { Search, X, ListMusic, Youtube } from 'lucide-react';
 
-export default function Header({ searchQuery, onSearchChange, searchSource, onSourceChange }) {
+export default function Header({ searchQuery, onSearchChange }) {
   const { 
     isQueueOpen, 
     setIsQueueOpen, 
     queue, 
-    setIsSpotifyModalOpen,
     setActiveTab 
   } = useAudioPlayer();
 
@@ -37,12 +36,6 @@ export default function Header({ searchQuery, onSearchChange, searchSource, onSo
       setActiveTab('search');
     }
   };
-
-  const sources = [
-    { id: 'all', label: 'All Sources' },
-    { id: 'jiosaavn', label: 'JioSaavn 320k' },
-    { id: 'youtube', label: 'YouTube Music' }
-  ];
 
   return (
     <header style={{
@@ -77,7 +70,7 @@ export default function Header({ searchQuery, onSearchChange, searchSource, onSo
           <Search size={18} color="var(--text-muted)" style={{ marginRight: '0.75rem', flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Search songs, artists, albums, or paste YouTube/Spotify link..."
+            placeholder="Search YouTube songs, artists, albums, or paste YouTube link..."
             value={localQuery}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
@@ -95,50 +88,25 @@ export default function Header({ searchQuery, onSearchChange, searchSource, onSo
           )}
         </div>
 
-        {/* Source Filter Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          {sources.map(s => {
-            const isSelected = searchSource === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => onSourceChange && onSourceChange(s.id)}
-                className={`glass-pill ${isSelected ? 'active' : ''}`}
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  fontSize: '0.78rem',
-                  cursor: 'pointer'
-                }}
-              >
-                {s.label}
-              </button>
-            );
-          })}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          padding: '0.45rem 0.85rem',
+          borderRadius: 'var(--radius-full)',
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: '#ef4444',
+          fontSize: '0.78rem',
+          fontWeight: 700
+        }}>
+          <Youtube size={14} />
+          <span>YouTube Music</span>
         </div>
       </div>
 
       {/* Right Action Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-        {/* Spotify Modal Trigger */}
-        <button
-          onClick={() => setIsSpotifyModalOpen(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.55rem 1rem',
-            borderRadius: 'var(--radius-full)',
-            background: 'rgba(29, 185, 84, 0.12)',
-            border: '1px solid rgba(29, 185, 84, 0.3)',
-            color: '#1db954',
-            fontSize: '0.82rem',
-            fontWeight: 600
-          }}
-        >
-          <Sparkles size={15} />
-          <span>Resolve Link</span>
-        </button>
-
         {/* Queue Drawer Trigger */}
         <button
           onClick={() => setIsQueueOpen(!isQueueOpen)}
