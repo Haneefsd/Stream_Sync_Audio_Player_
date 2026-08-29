@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { getJioSaavnLyrics, searchJioSaavn } from './jiosaavnService.js';
 
 /**
- * Fetch synced (LRC) and plain lyrics for a track using open LRCLIB API
+ * Fetch synced (LRC) and plain lyrics for a track using LRCLIB + sumitkolhe/jiosaavn-api fallback
  */
 export async function getLyrics(trackName, artistName, duration = null) {
   if (!trackName) return null;
@@ -16,7 +17,7 @@ export async function getLyrics(trackName, artistName, duration = null) {
     .replace(/ft\..*|feat\..*/i, '')
     .trim();
 
-  // Try direct match with LRCLIB
+  // 1. Try direct match with LRCLIB (for synchronized karaoke-style scrolling lyrics)
   try {
     const params = {
       track_name: cleanTitle,
@@ -49,7 +50,7 @@ export async function getLyrics(trackName, artistName, duration = null) {
     // Continue to search endpoint
   }
 
-  // Fallback to LRCLIB search
+  // 2. Fallback to LRCLIB search
   try {
     const searchRes = await axios.get('https://lrclib.net/api/search', {
       params: { q: `${cleanTitle} ${cleanArtist}` },
@@ -71,6 +72,29 @@ export async function getLyrics(trackName, artistName, duration = null) {
         plainLyrics: match.plainLyrics,
         isSynced: Boolean(match.syncedLyrics)
       };
+    }
+  } catch (err) {
+    // Fallback to JioSaavn API
+  }
+
+  // 3. Fallback to sumitkolhe/jiosaavn-api lyrics
+  try {
+    const saavnSongs = await searchJioSaavn(`${cleanTitle} ${cleanArtist}`, 1);
+    if (saavnSongs.length > 0 && saavnSongs[0].originalId) {
+      const saavnLyrics = await getJioSaavnLyrics(saavnSongs[0].originalId);
+      if (saavnLyrics && saavnLyrics.lyrics) {
+        return {
+          id: saavnSongs[0].originalId,
+          trackName: saavnSongs[0].title,
+          artistName: saavnSongs[0].artist,
+          syncedLyrics: [],
+          rawSyncedLyrics: null,
+          plainLyrics: saavnLyrics.lyrics.replace(/<br\s*[\/]?>/gi, '\n'),
+          isSynced: false,
+          snippet: saavnLyrics.snippet,
+          copyright: saavnLyrics.copyright
+        };
+      }
     }
   } catch (err) {
     // Return null if not found
