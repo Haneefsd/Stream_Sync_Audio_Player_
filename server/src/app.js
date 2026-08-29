@@ -50,5 +50,5 @@ process.on('unhandledRejection', (reason) => {
 app.listen(PORT, () => {
   console.log(`🎵 StreamSync Stateless Audio Server listening on port ${PORT}`);
   console.log(`👉 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`👉 Unified search: http://localhost:${PORT}/api/search?q=Arijit+Singh`);
+  console.log(`👉 Unified search: http://localhost:${PORT}/api/search?q=Aditya+Rikhari+Anuv+Jain`);
 });

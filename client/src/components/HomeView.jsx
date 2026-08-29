@@ -23,11 +23,13 @@ export default function HomeView({ onSearchGenre }) {
 
   const moods = [
     { label: 'All', query: 'Top Hits' },
+    { label: 'Aditya Rikhari & Anuv Jain', query: 'Aditya Rikhari Anuv Jain' },
+    { label: 'Aditya Rikhari Hits', query: 'Aditya Rikhari' },
+    { label: 'Anuv Jain Essentials', query: 'Anuv Jain' },
     { label: 'Trending Hindi', query: 'Arijit Singh Pritam Bollywood Hits' },
     { label: 'Global Pop', query: 'Global Billboard Hot 100' },
     { label: 'Chill & Lofi', query: 'Lofi Chill Beats' },
-    { label: 'Punjabi Hits', query: 'Punjabi Top Hits AP Dhillon' },
-    { label: 'Workout Energy', query: 'Gym Workout High Bass Music' }
+    { label: 'Punjabi Hits', query: 'Punjabi Top Hits AP Dhillon' }
   ];
 
   useEffect(() => {
