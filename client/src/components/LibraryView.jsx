@@ -9,8 +9,8 @@ import {
   Plus, 
   Trash2, 
   Music, 
-  FolderPlus,
-  Shuffle
+  Image,
+  Upload
 } from 'lucide-react';
 
 export default function LibraryView({ onSelectPlaylist }) {
@@ -19,6 +19,7 @@ export default function LibraryView({ onSelectPlaylist }) {
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
   const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'playlists' | 'liked'
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [newPlaylistCoverUrl, setNewPlaylistCoverUrl] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
@@ -43,11 +44,26 @@ export default function LibraryView({ onSelectPlaylist }) {
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
-    const created = storageService.createPlaylist(newPlaylistName.trim());
+    const created = storageService.createPlaylist(
+      newPlaylistName.trim(), 
+      '', 
+      newPlaylistCoverUrl.trim()
+    );
     setPlaylists(storageService.getPlaylists());
     setNewPlaylistName('');
+    setNewPlaylistCoverUrl('');
     setShowCreateModal(false);
     if (onSelectPlaylist) onSelectPlaylist(created);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewPlaylistCoverUrl(event.target.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDeletePlaylist = (e, id) => {
@@ -103,7 +119,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.82rem',
                 fontWeight: activeTabFilter === 'liked' ? 700 : 500,
-                background: activeTabFilter === 'liked' ? 'var(--accent-pink)' : 'transparent',
+                background: activeTabFilter === 'liked' ? 'var(--accent-indigo)' : 'transparent',
                 color: activeTabFilter === 'liked' ? '#fff' : 'var(--text-secondary)'
               }}
             >
@@ -139,14 +155,14 @@ export default function LibraryView({ onSelectPlaylist }) {
           </h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '1.5rem' }}>
-            {/* LIKED SONGS HERO CARD */}
+            {/* LIKED SONGS VIBRANT HERO CARD (Electric Indigo / Violet Gradient) */}
             {(activeTabFilter === 'all' || activeTabFilter === 'liked') && (
               <div
                 onClick={() => setActiveTab('favorites')}
                 className="glass-panel"
                 style={{
                   gridColumn: activeTabFilter === 'all' ? 'span 2' : 'span 1',
-                  background: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                   padding: '1.75rem',
                   borderRadius: 'var(--radius-lg)',
                   display: 'flex',
@@ -156,7 +172,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                   cursor: 'pointer',
                   position: 'relative',
                   overflow: 'hidden',
-                  boxShadow: '0 10px 25px rgba(236, 72, 153, 0.3)',
+                  boxShadow: '0 10px 25px rgba(99, 102, 241, 0.35)',
                   transition: 'transform 0.2s ease'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
@@ -183,7 +199,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                         height: '44px',
                         borderRadius: '50%',
                         background: '#fff',
-                        color: '#be185d',
+                        color: '#4f46e5',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -191,7 +207,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                       }}
                       title="Play All Liked Songs"
                     >
-                      <Play size={20} fill="#be185d" style={{ marginLeft: '2px' }} />
+                      <Play size={20} fill="#4f46e5" style={{ marginLeft: '2px' }} />
                     </button>
                   )}
                 </div>
@@ -208,82 +224,96 @@ export default function LibraryView({ onSelectPlaylist }) {
             )}
 
             {/* CUSTOM USER PLAYLIST CARDS */}
-            {playlists.map(pl => (
-              <div
-                key={pl.id}
-                onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
-                className="glass-panel"
-                style={{
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <div style={{
-                  width: '100%',
-                  aspectRatio: '1/1',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '1rem',
-                  border: '1px solid var(--border-subtle)',
-                  position: 'relative'
-                }}>
-                  <Music size={40} color="var(--accent-emerald)" />
-                  
-                  {pl.tracks && pl.tracks.length > 0 && (
-                    <button
-                      onClick={(e) => handlePlayPlaylist(e, pl)}
-                      style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: 'var(--accent-emerald)',
-                        color: '#000',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4)'
-                      }}
-                      title="Play Playlist"
-                    >
-                      <Play size={18} fill="#000" style={{ marginLeft: '2px' }} />
-                    </button>
-                  )}
-                </div>
-
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.25rem' }}>{pl.name}</h3>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  {pl.tracks?.length || 0} tracks
-                </span>
-
-                <button
-                  onClick={(e) => handleDeletePlaylist(e, pl.id)}
+            {playlists.map(pl => {
+              const coverImage = storageService.getPlaylistCover(pl);
+              return (
+                <div
+                  key={pl.id}
+                  onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
+                  className="glass-panel"
                   style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    padding: '6px',
-                    borderRadius: '50%',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    color: 'var(--text-muted)'
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
                   }}
-                  title="Delete playlist"
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '1/1',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem',
+                    border: '1px solid var(--border-subtle)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    {coverImage ? (
+                      <img 
+                        src={coverImage} 
+                        alt={pl.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <Music size={40} color="var(--accent-emerald)" />
+                    )}
+                    
+                    {pl.tracks && pl.tracks.length > 0 && (
+                      <button
+                        onClick={(e) => handlePlayPlaylist(e, pl)}
+                        style={{
+                          position: 'absolute',
+                          bottom: '10px',
+                          right: '10px',
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: 'var(--accent-emerald)',
+                          color: '#000',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4)'
+                        }}
+                        title="Play Playlist"
+                      >
+                        <Play size={18} fill="#000" style={{ marginLeft: '2px' }} />
+                      </button>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {pl.name}
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    {pl.tracks?.length || 0} tracks {pl.coverUrl ? '• Custom Photo' : ''}
+                  </span>
+
+                  <button
+                    onClick={(e) => handleDeletePlaylist(e, pl.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      padding: '6px',
+                      borderRadius: '50%',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      color: 'var(--text-muted)'
+                    }}
+                    title="Delete playlist"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -293,7 +323,7 @@ export default function LibraryView({ onSelectPlaylist }) {
         <div style={{ marginBottom: '3rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Heart size={20} color="var(--accent-pink)" fill="var(--accent-pink)" />
+              <Heart size={20} color="var(--accent-indigo)" fill="var(--accent-indigo)" />
               <h2 style={{ fontSize: '1.35rem', fontWeight: 700 }}>Liked Songs List</h2>
             </div>
 
@@ -303,7 +333,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                 style={{
                   fontSize: '0.82rem',
                   fontWeight: 600,
-                  color: 'var(--accent-pink)',
+                  color: 'var(--accent-indigo)',
                   cursor: 'pointer'
                 }}
               >
@@ -320,14 +350,14 @@ export default function LibraryView({ onSelectPlaylist }) {
             </div>
           ) : (
             <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Heart size={30} color="var(--accent-pink)" style={{ margin: '0 auto 0.75rem' }} />
+              <Heart size={30} color="var(--accent-indigo)" style={{ margin: '0 auto 0.75rem' }} />
               <p style={{ fontSize: '0.9rem' }}>No liked songs saved yet. Click the heart icon on any song to save it!</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Create Playlist Modal */}
+      {/* Create Playlist Modal with Custom Photo Support */}
       {showCreateModal && (
         <div 
           className="modal-backdrop" 
@@ -347,28 +377,72 @@ export default function LibraryView({ onSelectPlaylist }) {
         >
           <div 
             className="glass-panel" 
-            style={{ width: '100%', maxWidth: '420px', padding: '2rem', background: 'var(--bg-surface)' }}
+            style={{ width: '100%', maxWidth: '440px', padding: '2rem', background: 'var(--bg-surface)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.5rem' }}>Create New Playlist</h2>
             <form onSubmit={handleCreatePlaylist}>
-              <input
-                type="text"
-                autoFocus
-                placeholder="Playlist name (e.g. Late Night Hits)"
-                value={newPlaylistName}
-                onChange={(e) => setNewPlaylistName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.85rem 1rem',
-                  background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.95rem',
-                  color: '#fff',
-                  marginBottom: '1.5rem'
-                }}
-              />
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 600 }}>
+                  Playlist Name *
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Acoustic Chill, Late Night Vibes"
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem 1rem',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.92rem',
+                    color: '#fff'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 600 }}>
+                  Playlist Photo (Optional - defaults to 1st song image)
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="url"
+                    placeholder="Paste image URL (https://...)"
+                    value={newPlaylistCoverUrl}
+                    onChange={(e) => setNewPlaylistCoverUrl(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '0.7rem 0.85rem',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.82rem',
+                      color: '#fff'
+                    }}
+                  />
+                  <label style={{
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: 'var(--accent-emerald)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Upload from device"
+                  >
+                    <Upload size={16} />
+                    <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                  </label>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <button
                   type="button"

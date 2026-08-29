@@ -154,10 +154,10 @@ export default function PlayerBar() {
         {/* Favorite Heart */}
         <button
           onClick={handleLikeToggle}
-          style={{ color: isLiked ? 'var(--accent-pink)' : 'var(--text-muted)', padding: '6px', marginLeft: '0.25rem' }}
+          style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '6px', marginLeft: '0.25rem' }}
           title={isLiked ? 'Unlike' : 'Like'}
         >
-          <Heart size={18} fill={isLiked ? 'var(--accent-pink)' : 'none'} />
+          <Heart size={18} fill={isLiked ? 'var(--accent-indigo)' : 'none'} />
         </button>
       </div>
 

@@ -123,7 +123,7 @@ export default function FullscreenPlayer({ onClose }) {
         const gradient = ctx.createLinearGradient(0, 0, width, 0);
         gradient.addColorStop(0, '#10b981');
         gradient.addColorStop(0.5, '#06b6d4');
-        gradient.addColorStop(1, '#ec4899');
+        gradient.addColorStop(1, '#6366f1');
         ctx.strokeStyle = gradient;
         ctx.beginPath();
 

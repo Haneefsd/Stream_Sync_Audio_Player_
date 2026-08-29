@@ -102,10 +102,10 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
         
         <button
           onClick={handleLikeToggle}
-          style={{ color: isLiked ? 'var(--accent-pink)' : 'var(--text-muted)', padding: '2px' }}
+          style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '2px' }}
           title={isLiked ? 'Unlike' : 'Like'}
         >
-          <Heart size={15} fill={isLiked ? 'var(--accent-pink)' : 'none'} />
+          <Heart size={15} fill={isLiked ? 'var(--accent-indigo)' : 'none'} />
         </button>
 
         <button

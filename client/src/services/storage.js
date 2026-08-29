@@ -55,6 +55,7 @@ export const storageService = {
           id: 'pl_chill_vibes',
           name: 'Chill & Vibes',
           description: 'Relaxing tunes and late night beats',
+          coverUrl: '',
           createdAt: new Date().toISOString(),
           tracks: []
         }
@@ -66,18 +67,44 @@ export const storageService = {
     }
   },
 
-  createPlaylist: (name, description = '') => {
+  createPlaylist: (name, description = '', coverUrl = '') => {
     const playlists = storageService.getPlaylists();
     const newPlaylist = {
       id: `pl_${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
+      coverUrl: coverUrl.trim(),
       createdAt: new Date().toISOString(),
       tracks: []
     };
     playlists.push(newPlaylist);
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
     return newPlaylist;
+  },
+
+  updatePlaylist: (playlistId, updates = {}) => {
+    let playlists = storageService.getPlaylists();
+    const index = playlists.findIndex(p => p.id === playlistId);
+    if (index >= 0) {
+      playlists[index] = {
+        ...playlists[index],
+        ...updates
+      };
+      localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+      return playlists[index];
+    }
+    return null;
+  },
+
+  getPlaylistCover: (playlist) => {
+    if (!playlist) return null;
+    if (playlist.coverUrl && playlist.coverUrl.trim()) {
+      return playlist.coverUrl.trim();
+    }
+    if (playlist.tracks && playlist.tracks.length > 0 && playlist.tracks[0].thumbnailUrl) {
+      return playlist.tracks[0].thumbnailUrl;
+    }
+    return null;
   },
 
   deletePlaylist: (playlistId) => {

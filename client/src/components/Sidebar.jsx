@@ -97,13 +97,13 @@ export default function Sidebar({ onSelectPlaylist }) {
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm)',
                 background: isActive ? 'var(--bg-active)' : 'transparent',
-                color: isActive ? 'var(--accent-emerald)' : 'var(--text-secondary)',
+                color: isActive ? (item.id === 'favorites' ? 'var(--accent-indigo)' : 'var(--accent-emerald)') : 'var(--text-secondary)',
                 fontWeight: isActive ? 600 : 500,
                 fontSize: '0.92rem',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Icon size={20} color={isActive ? 'var(--accent-emerald)' : 'var(--text-secondary)'} />
+              <Icon size={20} color={isActive ? (item.id === 'favorites' ? 'var(--accent-indigo)' : 'var(--accent-emerald)') : 'var(--text-secondary)'} />
               <span>{item.label}</span>
             </button>
           );
@@ -147,39 +147,60 @@ export default function Sidebar({ onSelectPlaylist }) {
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-          {playlists.map(pl => (
-            <div
-              key={pl.id}
-              onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.55rem 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)',
-                fontSize: '0.86rem',
-                transition: 'background 0.15s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
-                <Music size={15} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {pl.name}
-                </span>
-              </div>
-              <button
-                onClick={(e) => handleDeletePlaylist(e, pl.id)}
-                style={{ opacity: 0.4, padding: '2px' }}
-                title="Delete playlist"
+          {playlists.map(pl => {
+            const coverImage = storageService.getPlaylistCover(pl);
+            return (
+              <div
+                key={pl.id}
+                onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.86rem',
+                  transition: 'background 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
+                  {/* Playlist mini cover or music icon */}
+                  <div style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {coverImage ? (
+                      <img src={coverImage} alt={pl.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Music size={13} color="var(--text-muted)" />
+                    )}
+                  </div>
+
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {pl.name}
+                  </span>
+                </div>
+                <button
+                  onClick={(e) => handleDeletePlaylist(e, pl.id)}
+                  style={{ opacity: 0.4, padding: '2px' }}
+                  title="Delete playlist"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 

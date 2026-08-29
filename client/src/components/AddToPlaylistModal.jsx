@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { storageService } from '../services/storage';
-import { X, Plus, Check, ListMusic, Music } from 'lucide-react';
+import { X, Plus, Check, ListMusic, Music, Image, Upload } from 'lucide-react';
 
 export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }) {
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [newPlaylistCover, setNewPlaylistCover] = useState('');
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [addedPlaylists, setAddedPlaylists] = useState({});
 
@@ -27,14 +28,25 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
-    const newPl = storageService.createPlaylist(newPlaylistName.trim());
+    const newPl = storageService.createPlaylist(newPlaylistName.trim(), '', newPlaylistCover.trim());
     storageService.addTrackToPlaylist(newPl.id, track);
     setNewPlaylistName('');
+    setNewPlaylistCover('');
     setShowCreateInput(false);
     const updated = storageService.getPlaylists();
     setPlaylists(updated);
     setAddedPlaylists(prev => ({ ...prev, [newPl.id]: true }));
     if (onPlaylistUpdated) onPlaylistUpdated();
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewPlaylistCover(event.target.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -59,7 +71,7 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '440px',
+          maxWidth: '460px',
           borderRadius: 'var(--radius-lg)',
           background: 'var(--bg-surface)',
           border: '1px solid var(--border-strong)',
@@ -121,40 +133,75 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
             <span>New Playlist</span>
           </button>
         ) : (
-          <form onSubmit={handleCreatePlaylist} style={{ display: 'flex', gap: '0.5rem' }}>
+          <form onSubmit={handleCreatePlaylist} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', background: 'var(--bg-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
             <input
               type="text"
               autoFocus
-              placeholder="Give your playlist a name..."
+              placeholder="Playlist name..."
               value={newPlaylistName}
               onChange={(e) => setNewPlaylistName(e.target.value)}
               style={{
-                flex: 1,
+                width: '100%',
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'var(--bg-elevated)',
+                background: 'var(--bg-surface)',
                 border: '1px solid var(--accent-emerald)',
                 fontSize: '0.88rem',
                 color: '#fff'
               }}
             />
-            <button
-              type="submit"
-              style={{
-                padding: '0 1rem',
+
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                type="url"
+                placeholder="Optional photo URL (defaults to 1st song)"
+                value={newPlaylistCover}
+                onChange={(e) => setNewPlaylistCover(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '0.8rem',
+                  color: '#fff'
+                }}
+              />
+              <label style={{
+                padding: '0.55rem 0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                background: 'var(--accent-emerald)',
-                color: '#000',
-                fontWeight: 700,
-                fontSize: '0.85rem'
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: 'var(--accent-emerald)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-            >
-              Create
-            </button>
+              title="Upload photo"
+              >
+                <Upload size={14} />
+                <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+              </label>
+
+              <button
+                type="submit"
+                style={{
+                  padding: '0.55rem 1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--accent-emerald)',
+                  color: '#000',
+                  fontWeight: 700,
+                  fontSize: '0.82rem'
+                }}
+              >
+                Create
+              </button>
+            </div>
           </form>
         )}
 
-        {/* Playlist List */}
+        {/* Playlist List with Cover Images */}
         <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
           {playlists.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -163,6 +210,7 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
           ) : (
             playlists.map(pl => {
               const inPlaylist = pl.tracks.some(t => t.id === track.id);
+              const coverImg = storageService.getPlaylistCover(pl);
               return (
                 <div
                   key={pl.id}
@@ -171,7 +219,7 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0.75rem 0.9rem',
+                    padding: '0.65rem 0.85rem',
                     borderRadius: 'var(--radius-sm)',
                     background: inPlaylist ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-elevated)',
                     border: inPlaylist ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
@@ -186,9 +234,35 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Music size={16} color={inPlaylist ? 'var(--accent-emerald)' : 'var(--text-muted)'} />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: inPlaylist ? 'var(--accent-emerald)' : 'var(--text-primary)' }}>
+                    {/* Thumbnail Cover or Music Icon */}
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      background: '#1e2433',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {coverImg ? (
+                        <img src={coverImg} alt={pl.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Music size={16} color={inPlaylist ? 'var(--accent-emerald)' : 'var(--text-muted)'} />
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <span style={{
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        color: inPlaylist ? 'var(--accent-emerald)' : 'var(--text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '220px'
+                      }}>
                         {pl.name}
                       </span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -206,7 +280,8 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
                     color: '#000',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    flexShrink: 0
                   }}>
                     {inPlaylist && <Check size={14} strokeWidth={3} />}
                   </div>

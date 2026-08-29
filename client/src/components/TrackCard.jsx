@@ -111,10 +111,10 @@ export default function TrackCard({ track, trackList = null }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
           <button
             onClick={handleLikeToggle}
-            style={{ color: isLiked ? 'var(--accent-pink)' : 'var(--text-muted)', padding: '2px' }}
+            style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '2px' }}
             title={isLiked ? 'Unlike' : 'Like song'}
           >
-            <Heart size={15} fill={isLiked ? 'var(--accent-pink)' : 'none'} />
+            <Heart size={15} fill={isLiked ? 'var(--accent-indigo)' : 'none'} />
           </button>
 
           <button

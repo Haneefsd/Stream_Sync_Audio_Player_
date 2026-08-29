@@ -39,12 +39,12 @@ export default function LikedSongsView() {
 
   return (
     <div className="content-scrollable">
-      {/* Liked Songs Hero Banner */}
+      {/* Liked Songs Vibrant Hero Banner (Indigo / Violet Gradient, No Pink) */}
       <div 
         className="hero-banner"
         style={{
-          background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, rgba(219, 39, 119, 0.1) 100%)',
-          border: '1px solid rgba(236, 72, 153, 0.3)',
+          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.28) 0%, rgba(124, 58, 237, 0.18) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.35)',
           display: 'flex',
           alignItems: 'center',
           gap: '2rem',
@@ -58,19 +58,19 @@ export default function LikedSongsView() {
           width: '130px',
           height: '130px',
           borderRadius: 'var(--radius-md)',
-          background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 10px 30px rgba(236, 72, 153, 0.4)',
+          boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4)',
           flexShrink: 0
         }}>
           <Heart size={64} fill="#fff" color="#fff" />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-pink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Playlist
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-indigo)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            PLAYLIST
           </span>
           <h1 style={{ fontSize: '2.75rem', fontWeight: 900, lineHeight: 1.1 }}>
             Liked Songs
@@ -101,11 +101,11 @@ export default function LikedSongsView() {
                   gap: '0.6rem',
                   padding: '0.85rem 1.75rem',
                   borderRadius: 'var(--radius-full)',
-                  background: 'var(--accent-pink)',
+                  background: 'var(--accent-indigo)',
                   color: '#fff',
                   fontWeight: 700,
                   fontSize: '0.95rem',
-                  boxShadow: '0 0 20px rgba(236, 72, 153, 0.4)',
+                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -188,13 +188,13 @@ export default function LikedSongsView() {
             width: '76px',
             height: '76px',
             borderRadius: '50%',
-            background: 'rgba(236, 72, 153, 0.12)',
+            background: 'rgba(99, 102, 241, 0.12)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '1.25rem'
           }}>
-            <Heart size={36} color="var(--accent-pink)" />
+            <Heart size={36} color="var(--accent-indigo)" />
           </div>
           <h3 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             No Liked Songs Yet
