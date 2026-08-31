@@ -137,8 +137,8 @@ The backend operates on port `5000` (or specified `PORT` in `.env`) providing cl
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Haneefsd/audio_Player.git
-cd audio_Player
+git clone https://github.com/Haneefsd/Stream_Sync_Audio_Player_.git
+cd Stream_Sync_Audio_Player_
 ```
 
 ### 2. Configure Backend Environment
