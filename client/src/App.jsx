@@ -57,6 +57,7 @@ function MainApp() {
         {activeTab === 'search' && (
           <SearchView 
             query={searchQuery} 
+            onSearchSelect={(q) => handleSearchChange(q)}
           />
         )}
 

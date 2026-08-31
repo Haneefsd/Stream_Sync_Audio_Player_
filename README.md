@@ -1,97 +1,170 @@
 # StreamSync Audio Player 🎵
 
-A lightweight, high-performance music player aggregator designed for seamless audio playback across multiple streaming sources (**JioSaavn**, **YouTube / YouTube Music**, and **Spotify metadata**).
-
-The application runs entirely **stateless**—requiring zero databases, no user authentication, and no persistent server-side storage.
+**StreamSync** is a high-performance, stateless music player and aggregator web application designed for high-fidelity audio playback. Built with a modern **React + Vite** frontend and an ultra-lightweight **Express** backend, it delivers instant music streaming with zero login walls and zero databases.
 
 ---
 
-## 📌 Key Features
+## 🌟 Key Highlights & Features
 
-* **Multi-Source Aggregation:** Unified search across JioSaavn and YouTube / YouTube Music.
-* **Direct High-Fidelity Audio:** Streams directly up to **320 kbps** from native CDN sources (JioSaavn) and piped audio streams (YouTube).
-* **Zero Database:** Favorites, liked songs, custom playlists, queue, and listening history live entirely on the client side via browser `localStorage`.
-* **No Login / Auth Walls:** Instant playback without account registration, API tokens, or OAuth flows.
-* **Smart Spotify Metadata Resolver:** Paste any Spotify track, playlist, or album link to instantly resolve tracks into playable 320 kbps streams.
-* **Synchronized Lyrics:** Live real-time scrolling and timestamped lyrics synced with playback.
-* **Real-time Audio Spectrum Visualizer:** Interactive Web Audio API frequency spectrum canvas visualizer.
-* **MediaSession API Integration:** Full controls on OS lock screen, media keys, and Bluetooth headsets.
-* **Responsive Modern UI:** Deep dark obsidian theme with glowing glassmorphism and fluid animations.
+### 🎧 Seamless Playback Engine
+* **Instant Client-Side Streaming:** Powered by a headless audio engine ensuring zero CORS errors, fast loading, and hardware-accelerated playback.
+* **Continuous Auto-Play:** Automatically and seamlessly transitions to the next track in your playlist or queue when a song finishes.
+* **Full Playback Controls:** Play/Pause, Next/Previous, Seek Bar, Volume slider, Mute toggle, Shuffle, and 3-state Repeat modes (`off`, `all`, `one`).
+* **MediaSession API Integration:** Full integration with OS lock screens, notifications, media keyboards, and Bluetooth accessories.
+
+### 📚 Zero Database, 100% Client-Side Persistence
+* **No Database Required:** Everything runs stateless—no SQL, no MongoDB, and no accounts needed.
+* **Custom Playlists with Photo Support:**
+  * Create, manage, and delete custom playlists.
+  * **Custom Cover Art:** Upload an image directly from your device or paste any image URL.
+  * **Smart 1st Song Cover Fallback:** If no custom photo is added, the playlist automatically uses the album artwork of its 1st track.
+* **Dedicated "Liked Songs" Panel:** A private collection showing strictly your favorited tracks with *Play All*, *Shuffle*, and in-panel search.
+* **Central "Your Library" Hub:** View all custom playlists and your Liked Songs collection side by side.
+* **Persistent Search Results:** Search results and active search queries are saved locally, ensuring your search results stay preserved when switching tabs.
+
+### 🔥 Dynamic & Personalized Discovery
+* **Personalized Recommendations:** Dynamically tailors trending songs on the homepage based on your past search history and favorite artists.
+* **Rotating Trending Mixes:** Rotates through diverse themes on page refresh (*Top Viral Chartbusters*, *Indie & Acoustic Essentials*, *Bollywood Hits*, *Global Pop*, *Lo-Fi Beats*, *Punjabi Waves*).
+* **Mood & Genre Filters:** Instant one-click chips to explore specific genres and artist essentials.
+
+### 🎤 Synchronized Lyrics & Fullscreen Visualizer
+* **Timestamped Synced Lyrics:** Real-time auto-scrolling lyrics synchronized with current playback (powered by LRCLIB).
+* **Interactive Audio Spectrum Visualizer:** Real-time canvas frequency spectrum visualizer with animated spinning vinyl cover art.
+
+### 🎨 Modern Vibrant Aesthetics
+* **Decent, Vibrant Theme:** Curated palette featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with obsidian dark glassmorphism.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Client Browser                         │
-│  ┌──────────────────┐  ┌────────────────┐  ┌─────────────┐  │
-│  │ UI & Controls    │  │ Web Audio API  │  │ localStorage│  │
-│  │ (React + Vite)   │  │ (Visualizer)   │  │ (Playlists) │  │
-│  └────────┬─────────┘  └───────▲────────┘  └─────────────┘  │
-└───────────┼────────────────────┼────────────────────────────┘
-            │                    │
-            ▼                    │
-┌────────────────────────────────┴────────────────────────────┐
-│                  Stateless Backend Engine                   │
-│                                                             │
-│   ├── /api/search      -> Queries JioSaavn & YouTube        │
-│   ├── /api/trending    -> Top Charts & Featured Music       │
-│   ├── /api/stream      -> YouTube Audio Chunk Pipeline      │
-│   ├── /api/resolve     -> Spotify Metadata to Stream Mapper │
-│   └── /api/lyrics      -> Synced & Plain Lyrics Provider    │
-└───────────┬─────────────────────────────────────────────────┘
-            │
-            ├───────────────► JioSaavn CDN (Direct 320kbps Stream)
-            ├───────────────► YouTube Media Servers (Piped Chunks)
-            ├───────────────► Spotify Web API (Public Metadata)
-            └───────────────► LRCLIB (Open Lyrics Provider)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Client (React + Vite)                         │
+│                                                                         │
+│  ┌───────────────────────┐  ┌────────────────────┐  ┌────────────────┐  │
+│  │   UI & Navigation     │  │   Playback Engine  │  │  localStorage  │  │
+│  │  (Home, Search,       │  │ (Auto-play next,   │  │ (Playlists,    │  │
+│  │   Library, Liked)     │  │  MediaSession API) │  │  Favorites)    │  │
+│  └───────────┬───────────┘  └──────────┬─────────┘  └────────────────┘  │
+└──────────────┼─────────────────────────┼────────────────────────────────┘
+               │                         │
+               ▼                         ▼
+┌──────────────────────────────┐  ┌───────────────────────────────────────┐
+│   Express Stateless Backend  │  │        High-Fidelity Audio            │
+│                              │  │                                       │
+│  ├── /api/search             │  │   Direct client-side streams          │
+│  ├── /api/trending           │  │   with zero proxy buffering           │
+│  └── /api/lyrics             │  └───────────────────────────────────────┘
+└──────────────┬───────────────┘
+               │
+               ├───────────────► Official Data API v3 / Scraper Fallback
+               └───────────────► LRCLIB (Synchronized Lyrics)
 ```
 
 ---
 
-## 🚀 API Endpoints
+## 🚀 API Documentation
 
-### 1. Unified Search
+The backend operates on port `5000` (or specified `PORT` in `.env`) providing clean JSON REST endpoints:
+
+### 1. Music Search
 * **Endpoint:** `GET /api/search`
-* **Query Params:** `q` (search term), `source` (`all` | `jiosaavn` | `youtube`), `limit` (number)
+* **Query Parameters:**
+  * `q` (required): Search keyword (e.g. `Aditya Rikhari`, `Taylor Swift`, song name, or link)
+  * `limit` (optional, default: `24`): Number of track results to return
+* **Example Response:**
+  ```json
+  {
+    "query": "Aditya Rikhari",
+    "count": 24,
+    "results": [
+      {
+        "id": "track_Xukxjs9VYiI",
+        "originalId": "Xukxjs9VYiI",
+        "title": "Aditya Rikhari - NASAMAJH",
+        "artist": "Aditya Rikhari",
+        "album": "Single",
+        "duration": 215,
+        "thumbnailUrl": "https://i.ytimg.com/vi/Xukxjs9VYiI/hqdefault.jpg",
+        "source": "stream"
+      }
+    ]
+  }
+  ```
 
-### 2. Trending & Top Charts
+### 2. Dynamic & Personalized Trending Mix
 * **Endpoint:** `GET /api/trending`
-* **Query Params:** `language` (e.g. `hindi,english,punjabi`)
+* **Query Parameters:**
+  * `history` (optional): Comma-separated list of user's past search queries/artists for personalized recommendations
+  * `limit` (optional, default: `24`): Number of trending tracks
+* **Example Response:**
+  ```json
+  {
+    "sectionTitle": "Trending Hits based on \"Aditya Rikhari\"",
+    "tracks": [ ... ],
+    "featured": [ ... ]
+  }
+  ```
 
-### 3. YouTube Audio Stream Pipeline
-* **Endpoint:** `GET /api/stream`
-* **Query Params:** `id` (YouTube Video ID)
-* **Features:** Supports HTTP Byte-Range requests for seeking in browser `<audio>` element.
-
-### 4. Spotify Metadata Resolver
-* **Endpoint:** `GET /api/resolve`
-* **Query Params:** `url` or `trackId` (Spotify URL or URI)
-
-### 5. Synchronized Lyrics
+### 3. Synchronized Lyrics Resolver
 * **Endpoint:** `GET /api/lyrics`
-* **Query Params:** `title`, `artist`, `duration`
+* **Query Parameters:**
+  * `title` (required): Song title
+  * `artist` (optional): Artist name
+  * `duration` (optional): Duration in seconds
+* **Example Response:**
+  ```json
+  {
+    "trackName": "NASAMAJH",
+    "artistName": "Aditya Rikhari",
+    "duration": 215,
+    "syncedLyrics": [
+      { "time": 12.5, "text": "First line of the song..." },
+      { "time": 16.8, "text": "Second synchronized line..." }
+    ],
+    "plainLyrics": "Full plain text lyrics..."
+  }
+  ```
 
 ---
 
-## 🛠️ Quick Start & Running Locally
+## 🛠️ Installation & Setup
 
-### 1. Start the Backend Server
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v18.x or higher)
+* `npm` or `yarn`
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Haneefsd/audio_Player.git
+cd audio_Player
+```
+
+### 2. Configure Backend Environment
+Create a `.env` file in the `server/` directory (or use `.env.example`):
+```env
+PORT=5000
+YOUTUBE_API_KEY=your_youtube_api_key_here
+```
+*(Note: If no API key is provided, the backend automatically uses its robust fallback scraper engine).*
+
+### 3. Install & Start Backend
 ```bash
 cd server
 npm install
 npm start
 ```
-*Backend runs on `http://localhost:5000`*
+*Backend will run at `http://localhost:5000`*
 
-### 2. Start the Frontend Client
+### 4. Install & Start Frontend Client
+In a separate terminal window:
 ```bash
 cd client
 npm install
 npm run dev
 ```
-*Frontend runs on `http://localhost:3000`*
+*Frontend will run at `http://localhost:3000`*
 
 ---
 
@@ -102,23 +175,57 @@ audio_Player/
 ├── client/
 │   ├── public/
 │   ├── src/
-│   │   ├── components/       # Sidebar, Header, PlayerBar, FullscreenPlayer, TrackCard, etc.
-│   │   ├── context/          # AudioPlayerContext (Playback engine, Web Audio API visualizer)
-│   │   ├── services/         # StorageService (localStorage), ApiService
-│   │   ├── utils/            # Formatters, stream builders
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── index.css         # Glassmorphic Design System
-│   ├── vite.config.js
-│   └── package.json
+│   │   ├── components/
+│   │   │   ├── AddToPlaylistModal.jsx   # Modal for adding songs & creating custom playlists
+│   │   │   ├── FullscreenPlayer.jsx     # Visualizer spectrum & synced lyrics view
+│   │   │   ├── Header.jsx               # Search bar & queue trigger
+│   │   │   ├── HomeView.jsx             # Hero banner, mood chips & dynamic trending
+│   │   │   ├── LibraryView.jsx          # Playlists & Liked Songs management hub
+│   │   │   ├── LikedSongsView.jsx       # Dedicated Liked Songs panel (Play all, shuffle)
+│   │   │   ├── PlayerBar.jsx            # Bottom sticky audio control bar
+│   │   │   ├── PlaylistDetailModal.jsx  # Playlist viewer with cover upload & track manager
+│   │   │   ├── QueueDrawer.jsx          # Slide-out queue & up-next drawer
+│   │   │   ├── SearchView.jsx           # Search results with persistent state & history
+│   │   │   ├── Sidebar.jsx              # Left navigation sidebar with playlist list
+│   │   │   ├── TrackCard.jsx            # Grid track card with options menu
+│   │   │   └── TrackRow.jsx             # List track row with equalizer animation
+│   │   ├── context/
+│   │   │   ├── AudioPlayerContext.jsx   # Context hook & definitions
+│   │   │   └── AudioPlayerProvider.jsx  # Continuous playback engine & state manager
+│   │   ├── services/
+│   │   │   ├── api.js                   # Client REST API consumer
+│   │   │   └── storage.js               # Zero-DB client localStorage storage service
+│   │   ├── utils/
+│   │   │   └── formatters.js            # Time & badge formatting helpers
+│   │   ├── App.jsx                      # Main app container & view router
+│   │   ├── main.jsx                     # Vite entry point
+│   │   └── index.css                    # Obsidian glassmorphic design system
+│   ├── package.json
+│   └── vite.config.js
 │
 ├── server/
 │   ├── src/
-│   │   ├── controllers/      # Search, stream, resolve, lyrics controllers
-│   │   ├── routes/           # Express API router
-│   │   ├── services/         # JioSaavn (320k), YouTube, Spotify, Lyrics services
-│   │   └── app.js            # Express app entry
+│   │   ├── controllers/
+│   │   │   ├── resolveController.js     # Lyrics handler
+│   │   │   └── searchController.js      # Search & dynamic trending handler
+│   │   ├── routes/
+│   │   │   └── api.js                   # API route definitions
+│   │   ├── services/
+│   │   │   ├── lyricsService.js         # LRCLIB synchronized lyrics provider
+│   │   │   └── youtubeService.js        # Data API v3 & fallback search service
+│   │   └── app.js                       # Express app bootstrap
+│   ├── .env.example
 │   └── package.json
 │
 └── README.md
 ```
+
+---
+
+## 🔒 Privacy & Data Policy
+StreamSync does **not** track, store, or transmit any user data, passwords, or personal credentials. All playlists, favorites, listening history, and preferences stay 100% on your local machine via browser `localStorage`.
+
+---
+
+## 📄 License
+This project is open-source and available under the [MIT License](LICENSE).

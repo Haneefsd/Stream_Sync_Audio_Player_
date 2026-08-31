@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   PLAYLISTS: 'streamsync_playlists',
   HISTORY: 'streamsync_history',
   SEARCH_HISTORY: 'streamsync_search_history',
+  LAST_SEARCH: 'streamsync_last_search',
   SETTINGS: 'streamsync_settings'
 };
 
@@ -186,6 +187,33 @@ export const storageService = {
 
   clearSearchHistory: () => {
     localStorage.removeItem(STORAGE_KEYS.SEARCH_HISTORY);
+  },
+
+  // --- Saved Last Search Results ---
+  getLastSearchResults: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LAST_SEARCH);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  saveLastSearchResults: (query, results) => {
+    try {
+      if (!query || !results) return;
+      localStorage.setItem(STORAGE_KEYS.LAST_SEARCH, JSON.stringify({
+        query: query.trim(),
+        results,
+        savedAt: new Date().toISOString()
+      }));
+    } catch (err) {
+      console.warn('Failed to cache search results:', err);
+    }
+  },
+
+  clearLastSearchResults: () => {
+    localStorage.removeItem(STORAGE_KEYS.LAST_SEARCH);
   },
 
   /**
