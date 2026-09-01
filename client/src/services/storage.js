@@ -217,26 +217,46 @@ export const storageService = {
   },
 
   /**
-   * Get personalized artist/query hints from past search and listening history
+   * Analyzes all old search results, history, and preferences to build a comprehensive recommendation profile
    */
   getPersonalizedHints: () => {
     const searches = storageService.getSearchHistory();
     const played = storageService.getHistory();
-    const artists = new Set();
+    const lastSearch = storageService.getLastSearchResults();
+    const favorites = storageService.getFavorites();
+    const hints = new Set();
 
-    // Collect from searches
-    searches.slice(0, 5).forEach(s => {
-      if (s.length > 2) artists.add(s);
-    });
-
-    // Collect from played tracks
-    played.slice(0, 5).forEach(t => {
-      if (t.artist && t.artist !== 'Artist') {
-        artists.add(t.artist);
+    // 1. All previous search queries
+    searches.forEach(s => {
+      if (s && s.trim().length > 1) {
+        hints.add(s.trim());
       }
     });
 
-    return Array.from(artists);
+    // 2. Artists from cached search results
+    if (lastSearch?.results && Array.isArray(lastSearch.results)) {
+      lastSearch.results.slice(0, 8).forEach(t => {
+        if (t.artist && t.artist !== 'Artist' && t.artist.length > 2) {
+          hints.add(t.artist.trim());
+        }
+      });
+    }
+
+    // 3. Artists from recently played tracks
+    played.slice(0, 15).forEach(t => {
+      if (t.artist && t.artist !== 'Artist' && t.artist.length > 2) {
+        hints.add(t.artist.trim());
+      }
+    });
+
+    // 4. Artists from liked/favorited songs
+    favorites.slice(0, 10).forEach(t => {
+      if (t.artist && t.artist !== 'Artist' && t.artist.length > 2) {
+        hints.add(t.artist.trim());
+      }
+    });
+
+    return Array.from(hints);
   },
 
   // --- Settings ---

@@ -20,6 +20,18 @@ function parseIsoDuration(durationStr) {
 }
 
 /**
+ * Fisher-Yates array shuffle utility
+ */
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
  * Search tracks using official YouTube Data API v3
  */
 async function searchViaApi(query, limit = 24) {
@@ -117,43 +129,76 @@ export async function searchYouTube(query, limit = 24) {
 }
 
 const DEFAULT_TRENDING_POOLS = [
-  { title: 'Aditya Rikhari & Anuv Jain Essentials', query: 'Aditya Rikhari Anuv Jain' },
-  { title: 'Top Global Viral Chartbusters', query: 'popular hits music 2024' },
-  { title: 'Indie Vibes & Acoustic Hits', query: 'Aditya Rikhari Prateek Kuhad Anuv Jain' },
-  { title: 'Trending Bollywood Chartbusters', query: 'Arijit Singh Pritam Bollywood Hits' },
-  { title: 'Global Pop & Billboard Top 50', query: 'billboard hot 100 music hits' },
-  { title: 'Late Night Chill & Lo-Fi Beats', query: 'lofi chill beats study sleep' },
-  { title: 'High-Energy Punjabi Waves', query: 'Punjabi Top Hits AP Dhillon Karan Aujla' }
+  'Aditya Rikhari Anuv Jain hits songs',
+  'popular top hits music 2024',
+  'Aditya Rikhari Prateek Kuhad Anuv Jain best songs',
+  'Arijit Singh Pritam Bollywood Hits',
+  'billboard hot 100 top music hits',
+  'lofi chill beats study sleep music',
+  'Punjabi Top Hits AP Dhillon Karan Aujla'
+];
+
+const CLEAN_SECTION_TITLES = [
+  'Trending Hits',
+  'Recommended For You',
+  'Top Charts & Hits',
+  'Discovery Mix',
+  'Featured Hits'
 ];
 
 /**
- * Get Dynamic Trending Mix customized according to search/listening history
+ * Get Dynamic Trending Mix: Analyzes all past search results, queries multiple sampled terms, 
+ * merges & randomly shuffles the tracks without displaying specific search queries in the title.
  */
 export async function getYouTubeTrending(historyQuery = '', limit = 24) {
-  let queryToSearch = '';
-  let sectionTitle = '';
+  const sectionTitle = 'Trending Hits';
+  let combinedTracks = [];
 
   if (historyQuery && historyQuery.trim()) {
     const hints = historyQuery.split(',').map(h => h.trim()).filter(Boolean);
+
     if (hints.length > 0) {
-      // Pick a random artist/search from the user's history
-      const selectedHint = hints[Math.floor(Math.random() * hints.length)];
-      queryToSearch = `${selectedHint} top hits songs`;
-      sectionTitle = `Trending Hits based on "${selectedHint}"`;
+      // Shuffle hints and pick 2-3 random distinct search keywords from past history
+      const shuffledHints = shuffleArray(hints);
+      const selectedHints = shuffledHints.slice(0, Math.min(3, shuffledHints.length));
+
+      // Fetch results for selected hints
+      const searchPromises = selectedHints.map(hint => 
+        searchYouTube(`${hint} top songs hits`, Math.ceil(limit / selectedHints.length) + 4)
+      );
+
+      const searchResults = await Promise.allSettled(searchPromises);
+      searchResults.forEach(res => {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          combinedTracks.push(...res.value);
+        }
+      });
     }
   }
 
-  // Fallback to rotating trending pools if no history or query
-  if (!queryToSearch) {
-    const selectedPool = DEFAULT_TRENDING_POOLS[Math.floor(Math.random() * DEFAULT_TRENDING_POOLS.length)];
-    queryToSearch = selectedPool.query;
-    sectionTitle = selectedPool.title;
+  // If no history or search yielded few results, supplement from trending pools
+  if (combinedTracks.length < 8) {
+    const randomPool = DEFAULT_TRENDING_POOLS[Math.floor(Math.random() * DEFAULT_TRENDING_POOLS.length)];
+    const fallbackTracks = await searchYouTube(randomPool, limit);
+    combinedTracks.push(...fallbackTracks);
   }
 
-  const tracks = await searchYouTube(queryToSearch, limit);
+  // Deduplicate tracks by id / originalId
+  const seenIds = new Set();
+  const uniqueTracks = [];
+  for (const track of combinedTracks) {
+    const trackKey = track.originalId || track.id;
+    if (trackKey && !seenIds.has(trackKey)) {
+      seenIds.add(trackKey);
+      uniqueTracks.push(track);
+    }
+  }
+
+  // Randomize & slice to desired limit
+  const randomizedTracks = shuffleArray(uniqueTracks).slice(0, limit);
 
   return {
     sectionTitle,
-    tracks
+    tracks: randomizedTracks
   };
 }

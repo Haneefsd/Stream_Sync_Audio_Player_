@@ -3,16 +3,19 @@ import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
 import { storageService } from '../services/storage';
 import TrackCard from './TrackCard';
-import { 
-  Flame, 
-  Play, 
-  Zap
+import {
+  Flame,
+  Play,
+  Zap,
+  RotateCw,
+  Sparkles
 } from 'lucide-react';
 
 export default function HomeView({ onSearchGenre }) {
   const { playTrack } = useAudioPlayer();
   const [trendingData, setTrendingData] = useState({ sectionTitle: 'Trending Hits', tracks: [], featured: [] });
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeMood, setActiveMood] = useState('All');
 
   const moods = [
@@ -26,28 +29,34 @@ export default function HomeView({ onSearchGenre }) {
     { label: 'Punjabi Hits', query: 'Punjabi Top Hits AP Dhillon' }
   ];
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadTrending() {
-      setIsLoading(true);
-      try {
-        // Collect past search queries & played artists for personalized recommendations
-        const hints = storageService.getPersonalizedHints();
-        const historyParam = hints.join(',');
+  const fetchTrendingRecommendations = async (showRefreshSpin = false) => {
+    if (showRefreshSpin) setIsRefreshing(true);
+    else setIsLoading(true);
 
-        const data = await apiService.getTrending(historyParam);
-        if (isMounted) {
-          setTrendingData(data);
-        }
-      } catch (err) {
-        console.error('Failed to load trending:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
+    try {
+      // Analyze all old search results, history, and favorited artists
+      const hints = storageService.getPersonalizedHints();
+      const historyParam = hints.join(',');
+
+      const data = await apiService.getTrending(historyParam);
+      setTrendingData(data);
+    } catch (err) {
+      console.error('Failed to load trending recommendations:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-    loadTrending();
-    return () => { isMounted = false; };
+  };
+
+  useEffect(() => {
+    fetchTrendingRecommendations(false);
   }, []);
+
+  const handleManualRefresh = (e) => {
+    e.stopPropagation();
+    if (isRefreshing) return;
+    fetchTrendingRecommendations(true);
+  };
 
   const handleMoodClick = (mood) => {
     setActiveMood(mood.label);
@@ -145,8 +154,8 @@ export default function HomeView({ onSearchGenre }) {
               border: '2px solid rgba(255, 255, 255, 0.15)',
               position: 'relative'
             }}>
-              <img 
-                src={featuredTrack.thumbnailUrl} 
+              <img
+                src={featuredTrack.thumbnailUrl}
                 alt={featuredTrack.title}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -179,7 +188,7 @@ export default function HomeView({ onSearchGenre }) {
         ))}
       </div>
 
-      {/* Dynamic Trending & Discovery Mix (Personalized by Search History) */}
+      {/* Dynamic Trending & Recommended Mix with Small Refresh Button */}
       <div style={{ marginBottom: '3.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -187,19 +196,59 @@ export default function HomeView({ onSearchGenre }) {
               <Flame size={18} color="var(--accent-emerald)" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>
-                {trendingData.sectionTitle || 'Trending Hits Today'}
-              </h2>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Personalized discovery mix • Updates dynamically based on your taste
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>
+                  Trending Hits
+                </h2>
+
+                {/* Small Refresh Button for Trending Hits */}
+                <button
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: isRefreshing ? 'var(--accent-emerald)' : 'var(--text-muted)',
+                    cursor: isRefreshing ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isRefreshing) {
+                      e.currentTarget.style.color = 'var(--accent-emerald)';
+                      e.currentTarget.style.borderColor = 'var(--accent-emerald)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isRefreshing) {
+                      e.currentTarget.style.color = 'var(--text-muted)';
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    }
+                  }}
+                  title="Refresh Trending & Recommended Hits"
+                >
+                  <RotateCw
+                    size={14}
+                    style={{
+                      animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
+                      transition: 'transform 0.2s ease'
+                    }}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-            Loading personalized tracks...
+            Loading recommended tracks...
           </div>
         ) : (
           <div className="track-grid">
