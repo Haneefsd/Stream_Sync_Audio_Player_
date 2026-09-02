@@ -1,0 +1,29 @@
+{
+  "name": "streamsync-audio-player",
+  "version": "1.0.0",
+  "description": "StreamSync Audio Player - Stateless High-Fidelity Music Streaming",
+  "type": "module",
+  "scripts": {
+    "install:server": "npm install --prefix server",
+    "install:client": "npm install --prefix client",
+    "install:all": "npm run install:server && npm run install:client",
+    "build:client": "npm run build --prefix client",
+    "build": "npm run install:all && npm run build:client",
+    "start": "node server/src/app.js",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "audio-player",
+    "music-streaming",
+    "react",
+    "vite",
+    "express",
+    "stateless"
+  ],
+  "author": "Haneefsd",
+  "license": "MIT"
+}

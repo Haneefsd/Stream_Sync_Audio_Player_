@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: streamsync-audio-player
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: YOUTUBE_API_KEY
+        sync: false
