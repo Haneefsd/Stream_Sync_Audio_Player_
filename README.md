@@ -1,10 +1,5 @@
 # StreamSync Audio Player 🎵
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
-[![Frontend: React + Vite](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite-blue.svg)](https://vitejs.dev/)
-[![Backend: Node.js + Express](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-green.svg)](https://nodejs.org/)
-[![Styling: Vanilla CSS Glassmorphism](https://img.shields.io/badge/Design-Obsidian%20Glassmorphism-indigo.svg)](client/src/index.css)
-[![Zero Database: Pure Client](https://img.shields.io/badge/Database-Zero%20Database%20(Pure%20Client)-cyan.svg)](client/src/services/storage.js)
 
 **StreamSync** is a high-performance, stateless music player and audio streaming web application engineered for instant, high-fidelity music playback. Built with a modern **React + Vite** frontend and an ultra-lightweight **Express** backend, it delivers instant music streaming with zero login walls, zero user tracking, and zero database requirements.
 
