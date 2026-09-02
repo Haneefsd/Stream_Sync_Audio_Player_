@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import { storageService } from '../services/storage';
 import TrackCard from './TrackCard';
 import TrackRow from './TrackRow';
-import { Search, LayoutGrid, List, History, Trash2, ArrowRight } from 'lucide-react';
+import { Search, LayoutGrid, List, History, Trash2, X } from 'lucide-react';
 
 export default function SearchView({ query, onSearchSelect }) {
   const { playTrack } = useAudioPlayer();
@@ -61,6 +61,12 @@ export default function SearchView({ query, onSearchSelect }) {
     }
   };
 
+  const handleRemoveHistoryItem = (item, e) => {
+    if (e) e.stopPropagation();
+    storageService.removeSearchHistoryItem(item);
+    setSearchHistory(storageService.getSearchHistory());
+  };
+
   const handleClearHistory = () => {
     storageService.clearSearchHistory();
     setSearchHistory([]);
@@ -84,11 +90,12 @@ export default function SearchView({ query, onSearchSelect }) {
         gap: '1rem'
       }}>
         <div>
+          {/* While displaying search results, only display the search keyword */}
           <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>
-            {activeQuery ? `Results for "${activeQuery}"` : 'Search Music'}
+            {activeQuery ? activeQuery : 'Search Music'}
           </h1>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            {results.length > 0 ? `${results.length} saved tracks found` : 'Search any song, artist, album, or acoustic cover'}
+            {results.length > 0 ? `${results.length} tracks found` : 'Search any song, artist, album, or acoustic cover'}
           </span>
         </div>
 
@@ -149,7 +156,7 @@ export default function SearchView({ query, onSearchSelect }) {
             <div className="sound-wave-bar" style={{ width: '4px' }}></div>
             <div className="sound-wave-bar" style={{ width: '4px' }}></div>
           </div>
-          <span>Searching and saving music results...</span>
+          <span>Searching music...</span>
         </div>
       )}
 
@@ -170,7 +177,7 @@ export default function SearchView({ query, onSearchSelect }) {
         )
       )}
 
-      {/* Empty State / Search History List */}
+      {/* Empty State / Previous Searches List with Cross to remove individual items */}
       {!isLoading && results.length === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           {searchHistory.length > 0 ? (
@@ -220,7 +227,34 @@ export default function SearchView({ query, onSearchSelect }) {
                       <Search size={15} color="var(--text-muted)" />
                       <span>{item}</span>
                     </div>
-                    <ArrowRight size={14} color="var(--text-muted)" />
+
+                    {/* Cross Button to remove individual search result */}
+                    <button
+                      onClick={(e) => handleRemoveHistoryItem(item, e)}
+                      title={`Remove "${item}"`}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#ef4444';
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                        e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -248,7 +282,7 @@ export default function SearchView({ query, onSearchSelect }) {
                 <Search size={30} />
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                {activeQuery ? 'No matching songs found' : 'Type to search music'}
+                {activeQuery ? activeQuery : 'Type to search music'}
               </h3>
               <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.9rem' }}>
                 Search by track title, artist name, album, or acoustic covers.

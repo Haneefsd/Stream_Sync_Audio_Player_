@@ -176,12 +176,27 @@ export const storageService = {
   },
 
   addSearchHistory: (query) => {
-    if (!query || !query.trim()) return;
+    if (!query || !query.trim() || query.trim().length < 2) return;
     const cleanQuery = query.trim();
     let history = storageService.getSearchHistory();
-    history = history.filter(q => q.toLowerCase() !== cleanQuery.toLowerCase());
+    // Filter out duplicates and partial typed fragments
+    history = history.filter(q => {
+      const qLower = q.toLowerCase();
+      const cleanLower = cleanQuery.toLowerCase();
+      if (qLower === cleanLower) return false;
+      // If previous item was an incomplete prefix just typed, replace it
+      if (cleanLower.startsWith(qLower) && (cleanLower.length - qLower.length <= 5)) return false;
+      return true;
+    });
     history.unshift(cleanQuery);
     history = history.slice(0, 30);
+    localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(history));
+  },
+
+  removeSearchHistoryItem: (query) => {
+    if (!query) return;
+    let history = storageService.getSearchHistory();
+    history = history.filter(q => q.toLowerCase() !== query.trim().toLowerCase());
     localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(history));
   },
 
