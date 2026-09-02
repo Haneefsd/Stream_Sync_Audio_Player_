@@ -263,19 +263,21 @@ export default function FullscreenPlayer({ onClose }) {
       </div>
 
       {/* Main Center Stage */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 0, padding: '0.5rem 1.5rem' }}>
         {/* VISUALIZER TAB */}
         {activeTab === 'visualizer' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: '2rem' }}>
-            {/* Spinning Vinyl Cover Art */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: '1.25rem' }}>
+            {/* Spinning Vinyl Cover Art - Perfect Complete Circle */}
             <div style={{
               position: 'relative',
-              width: '500px',
-              height: '500px',
+              width: 'min(38vh, 320px)',
+              height: 'min(38vh, 320px)',
+              aspectRatio: '1 / 1',
+              flexShrink: 0,
               borderRadius: '50%',
               overflow: 'hidden',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-emerald-glow)',
-              border: '6px solid #1e2433',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 35px var(--accent-emerald-glow)',
+              border: '5px solid #081d53ff',
               animation: isPlaying ? 'spin 18s linear infinite' : 'none'
             }}>
               <style>{`
@@ -287,32 +289,32 @@ export default function FullscreenPlayer({ onClose }) {
               <img
                 src={currentTrack.thumbnailUrl}
                 alt={currentTrack.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
               />
               <div style={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '60px',
-                height: '60px',
+                width: '50px',
+                height: '50px',
                 background: '#07090e',
-                border: '4px solid #fff',
+                border: '3px solid #fff',
                 borderRadius: '50%',
                 transform: 'translate(-50%, -50%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Disc size={24} color="var(--accent-emerald)" />
+                <Disc size={20} color="var(--accent-emerald)" />
               </div>
             </div>
 
             {/* Audio Visualizer Spectrum Canvas */}
-            <div style={{ width: '100%', maxWidth: '780px', height: '120px', position: 'relative' }}>
+            <div style={{ width: '100%', maxWidth: '720px', height: '90px', position: 'relative', flexShrink: 0 }}>
               <canvas
                 ref={canvasRef}
-                width={780}
-                height={120}
+                width={720}
+                height={90}
                 style={{ width: '100%', height: '100%' }}
               />
             </div>
