@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export default function HomeView({ onSearchGenre }) {
-  const { playTrack } = useAudioPlayer();
+  const { playTrack, pageRefreshKey } = useAudioPlayer();
   const [trendingData, setTrendingData] = useState({ sectionTitle: 'Trending Hits', tracks: [], featured: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -49,8 +49,9 @@ export default function HomeView({ onSearchGenre }) {
   };
 
   useEffect(() => {
+    setActiveMood('All');
     fetchTrendingRecommendations(false);
-  }, []);
+  }, [pageRefreshKey]);
 
   const handleManualRefresh = (e) => {
     e.stopPropagation();
@@ -86,7 +87,7 @@ export default function HomeView({ onSearchGenre }) {
             fontWeight: 700,
             marginBottom: '1.25rem'
           }}>
-            <Zap size={14} /> ZERO DATABASE • STATELESS AUDIO PLAYER
+            <Zap size={14} /> STATELESS AUDIO PLAYER
           </div>
 
           <h1 style={{

@@ -1,27 +1,35 @@
 import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
-import { 
-  Home, 
-  Search, 
-  Library, 
-  Heart, 
-  PlusSquare, 
-  Music, 
-  Radio, 
+import {
+  Home,
+  Search,
+  Library,
+  Heart,
+  PlusSquare,
+  Music,
+  Radio,
   CheckCircle2,
   Trash2
 } from 'lucide-react';
 
-export default function Sidebar({ onSelectPlaylist }) {
-  const { 
-    activeTab, 
-    setActiveTab
+export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
+  const {
+    activeTab,
+    setActiveTab,
+    refreshPage
   } = useAudioPlayer();
 
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
   const [showNewPlaylistInput, setShowNewPlaylistInput] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [isLogoSpinning, setIsLogoSpinning] = useState(false);
+
+  const handleLogoClick = () => {
+    setIsLogoSpinning(true);
+    setTimeout(() => setIsLogoSpinning(false), 650);
+    refreshPage();
+  };
 
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
@@ -57,8 +65,28 @@ export default function Sidebar({ onSelectPlaylist }) {
       userSelect: 'none',
       zIndex: 10
     }}>
-      {/* Brand / Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', padding: '0 0.5rem' }}>
+      {/* Brand / Logo (Clicking refreshes the page without stopping music) */}
+      <div
+        onClick={handleLogoClick}
+        title="Refresh page (playback will not stop)"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          marginBottom: '2rem',
+          padding: '0.5rem',
+          borderRadius: 'var(--radius-md)',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          userSelect: 'none'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+        }}
+      >
         <div style={{
           width: '38px',
           height: '38px',
@@ -67,7 +95,9 @@ export default function Sidebar({ onSelectPlaylist }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 15px var(--accent-emerald-glow)'
+          boxShadow: '0 0 15px var(--accent-emerald-glow)',
+          transform: isLogoSpinning ? 'rotate(360deg)' : 'none',
+          transition: isLogoSpinning ? 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
         }}>
           <Radio size={22} color="#000" strokeWidth={2.5} />
         </div>
@@ -149,6 +179,7 @@ export default function Sidebar({ onSelectPlaylist }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
           {playlists.map(pl => {
             const coverImage = storageService.getPlaylistCover(pl);
+            const isPlaylistActive = activeTab === 'playlist' && selectedPlaylistId === pl.id;
             return (
               <div
                 key={pl.id}
@@ -160,12 +191,18 @@ export default function Sidebar({ onSelectPlaylist }) {
                   padding: '0.55rem 0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer',
-                  color: 'var(--text-secondary)',
+                  background: isPlaylistActive ? 'var(--bg-active)' : 'transparent',
+                  color: isPlaylistActive ? 'var(--accent-emerald)' : 'var(--text-secondary)',
+                  fontWeight: isPlaylistActive ? 600 : 500,
                   fontSize: '0.86rem',
-                  transition: 'background 0.15s ease'
+                  transition: 'all 0.15s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={(e) => {
+                  if (!isPlaylistActive) e.currentTarget.style.background = 'var(--bg-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isPlaylistActive) e.currentTarget.style.background = 'transparent';
+                }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
                   {/* Playlist mini cover or music icon */}
@@ -201,23 +238,6 @@ export default function Sidebar({ onSelectPlaylist }) {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Bottom Zero DB Indicator */}
-      <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.45rem',
-          fontSize: '0.7rem',
-          color: 'var(--text-muted)',
-          background: 'rgba(255, 255, 255, 0.03)',
-          padding: '0.4rem 0.6rem',
-          borderRadius: 'var(--radius-sm)'
-        }}>
-          <CheckCircle2 size={13} color="var(--accent-emerald)" />
-          <span>Zero Database • Pure Client</span>
         </div>
       </div>
     </aside>

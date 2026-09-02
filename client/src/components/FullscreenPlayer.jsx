@@ -2,17 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
 import { formatTime, getSourceBadge } from '../utils/formatters';
-import { 
-  X, 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Shuffle, 
-  Repeat, 
-  Repeat1, 
-  Volume2, 
-  VolumeX, 
+import {
+  X,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Shuffle,
+  Repeat,
+  Repeat1,
+  Volume2,
+  VolumeX,
   Heart,
   Activity,
   FileText,
@@ -270,8 +270,8 @@ export default function FullscreenPlayer({ onClose }) {
             {/* Spinning Vinyl Cover Art */}
             <div style={{
               position: 'relative',
-              width: '320px',
-              height: '320px',
+              width: '500px',
+              height: '500px',
               borderRadius: '50%',
               overflow: 'hidden',
               boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-emerald-glow)',
@@ -284,8 +284,8 @@ export default function FullscreenPlayer({ onClose }) {
                   to { transform: rotate(360deg); }
                 }
               `}</style>
-              <img 
-                src={currentTrack.thumbnailUrl} 
+              <img
+                src={currentTrack.thumbnailUrl}
                 alt={currentTrack.title}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -321,7 +321,7 @@ export default function FullscreenPlayer({ onClose }) {
 
         {/* LYRICS TAB */}
         {activeTab === 'lyrics' && (
-          <div 
+          <div
             ref={lyricsContainerRef}
             style={{
               width: '100%',
@@ -390,7 +390,7 @@ export default function FullscreenPlayer({ onClose }) {
             {formatTime(currentTime)}
           </span>
 
-          <div 
+          <div
             ref={seekSliderRef}
             className="slider-container"
             onClick={handleSeekClick}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AudioPlayerProvider } from './context/AudioPlayerProvider';
 import { useAudioPlayer } from './context/AudioPlayerContext';
 import Sidebar from './components/Sidebar';
@@ -7,15 +7,16 @@ import HomeView from './components/HomeView';
 import SearchView from './components/SearchView';
 import LibraryView from './components/LibraryView';
 import LikedSongsView from './components/LikedSongsView';
+import PlaylistView from './components/PlaylistView';
 import PlayerBar from './components/PlayerBar';
 import QueueDrawer from './components/QueueDrawer';
 import FullscreenPlayer from './components/FullscreenPlayer';
-import PlaylistDetailModal from './components/PlaylistDetailModal';
 
 function MainApp() {
   const { 
     activeTab, 
     setActiveTab, 
+    pageRefreshKey,
     isQueueOpen, 
     setIsQueueOpen, 
     isFullscreenPlayerOpen, 
@@ -24,6 +25,12 @@ function MainApp() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+
+  // When page is refreshed via Logo click, reset active query & selected playlist
+  useEffect(() => {
+    setSearchQuery('');
+    setSelectedPlaylist(null);
+  }, [pageRefreshKey]);
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
@@ -37,10 +44,18 @@ function MainApp() {
     setActiveTab('search');
   };
 
+  const handleSelectPlaylist = (playlist) => {
+    setSelectedPlaylist(playlist);
+    setActiveTab('playlist');
+  };
+
   return (
     <div className="app-container">
       {/* 1. Left Sidebar Navigation */}
-      <Sidebar onSelectPlaylist={(pl) => setSelectedPlaylist(pl)} />
+      <Sidebar 
+        onSelectPlaylist={handleSelectPlaylist} 
+        selectedPlaylistId={selectedPlaylist?.id}
+      />
 
       {/* 2. Main Viewport & Scrollable Content */}
       <main className="main-viewport">
@@ -63,12 +78,25 @@ function MainApp() {
 
         {activeTab === 'library' && (
           <LibraryView 
-            onSelectPlaylist={(pl) => setSelectedPlaylist(pl)} 
+            onSelectPlaylist={handleSelectPlaylist} 
           />
         )}
 
         {activeTab === 'favorites' && (
           <LikedSongsView />
+        )}
+
+        {/* Dedicated Individual Playlist Page */}
+        {activeTab === 'playlist' && selectedPlaylist && (
+          <PlaylistView 
+            playlist={selectedPlaylist}
+            onBack={() => setActiveTab('library')}
+            onPlaylistUpdate={(updatedPl) => setSelectedPlaylist(updatedPl)}
+            onPlaylistDelete={() => {
+              setSelectedPlaylist(null);
+              setActiveTab('library');
+            }}
+          />
         )}
       </main>
 
@@ -82,14 +110,6 @@ function MainApp() {
 
       {isFullscreenPlayerOpen && (
         <FullscreenPlayer onClose={() => setIsFullscreenPlayerOpen(false)} />
-      )}
-
-      {selectedPlaylist && (
-        <PlaylistDetailModal 
-          playlist={selectedPlaylist} 
-          onClose={() => setSelectedPlaylist(null)}
-          onUpdate={() => {}}
-        />
       )}
     </div>
   );

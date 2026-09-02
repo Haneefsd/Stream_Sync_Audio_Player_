@@ -70,7 +70,7 @@ export default function Header({ searchQuery, onSearchChange }) {
           <Search size={18} color="var(--text-muted)" style={{ marginRight: '0.75rem', flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Search YouTube songs, artists, albums, or paste YouTube link..."
+            placeholder="Search songs or artists..."
             value={localQuery}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

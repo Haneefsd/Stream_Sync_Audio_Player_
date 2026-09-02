@@ -27,6 +27,15 @@ export const AudioPlayerProvider = ({ children }) => {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [playlistModalTrack, setPlaylistModalTrack] = useState(null);
+  const [pageRefreshKey, setPageRefreshKey] = useState(0);
+
+  const refreshPage = useCallback(() => {
+    setActiveTab('home');
+    setIsQueueOpen(false);
+    setIsFullscreenPlayerOpen(false);
+    setPlaylistModalTrack(null);
+    setPageRefreshKey(prev => prev + 1);
+  }, []);
 
   // References
   const ytPlayerRef = useRef(null);
@@ -405,6 +414,8 @@ export const AudioPlayerProvider = ({ children }) => {
         isFullscreenPlayerOpen,
         isQueueOpen,
         activeTab,
+        pageRefreshKey,
+        refreshPage,
         playTrack,
         togglePlay,
         handleNextTrack,
