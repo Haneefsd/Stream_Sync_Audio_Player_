@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: streamsync-audio-player
+    name: stream-sync-audio-player
     env: node
     plan: free
     buildCommand: npm run build

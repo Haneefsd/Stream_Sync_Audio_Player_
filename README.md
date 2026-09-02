@@ -1,5 +1,6 @@
 # StreamSync Audio Player 🎵
 
+> 🌐 **Live Application:** [https://stream-sync-audio-player.onrender.com](https://stream-sync-audio-player.onrender.com)
 
 **StreamSync** is a high-performance, stateless music player and audio streaming web application engineered for instant, high-fidelity music playback. Built with a modern **React + Vite** frontend and an ultra-lightweight **Express** backend, it delivers instant music streaming with zero login walls, zero user tracking, and zero database requirements.
 
