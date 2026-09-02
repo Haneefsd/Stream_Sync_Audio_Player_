@@ -1,84 +1,240 @@
 # StreamSync Audio Player 🎵
 
-**StreamSync** is a high-performance, stateless music player and aggregator web application designed for high-fidelity audio playback. Built with a modern **React + Vite** frontend and an ultra-lightweight **Express** backend, it delivers instant music streaming with zero login walls and zero databases.
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![Frontend: React + Vite](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite-blue.svg)](https://vitejs.dev/)
+[![Backend: Node.js + Express](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-green.svg)](https://nodejs.org/)
+[![Styling: Vanilla CSS Glassmorphism](https://img.shields.io/badge/Design-Obsidian%20Glassmorphism-indigo.svg)](client/src/index.css)
+[![Zero Database: Pure Client](https://img.shields.io/badge/Database-Zero%20Database%20(Pure%20Client)-cyan.svg)](client/src/services/storage.js)
+
+**StreamSync** is a high-performance, stateless music player and audio streaming web application engineered for instant, high-fidelity music playback. Built with a modern **React + Vite** frontend and an ultra-lightweight **Express** backend, it delivers instant music streaming with zero login walls, zero user tracking, and zero database requirements.
+
+---
+
+## 📑 Table of Contents
+1. [Key Highlights & Features](#-key-highlights--features)
+2. [System Architecture & Data Flow](#-system-architecture--data-flow)
+3. [Deep-Dive Feature Breakdown](#-deep-dive-feature-breakdown)
+   - [Seamless Audio Playback Engine](#1-seamless-audio-playback-engine)
+   - [Dedicated Full-Page Playlist Management](#2-dedicated-full-page-playlist-management)
+   - [Dedicated Liked Songs Hub](#3-dedicated-liked-songs-hub)
+   - [Advanced Search & History Engine](#4-advanced-search--history-engine)
+   - [Smart Recommendation & Dynamic Trending Mix](#5-smart-recommendation--dynamic-trending-mix)
+   - [Fullscreen Visualizer & Synchronized Lyrics](#6-fullscreen-visualizer--synchronized-lyrics)
+   - [Decent Vibrant Theme & Glassmorphism](#7-decent-vibrant-theme--glassmorphism)
+4. [Data Models & Schema Specifications](#-data-models--schema-specifications)
+5. [REST API Documentation](#-rest-api-documentation)
+6. [Installation & Setup Guide](#-installation--setup-guide)
+7. [Production Build & Deployment](#-production-build--deployment)
+8. [Comprehensive Directory Tree](#-comprehensive-directory-tree)
+9. [Keyboard Shortcuts & Media Controls](#-keyboard-shortcuts--media-controls)
+10. [Troubleshooting & FAQ](#-troubleshooting--faq)
+11. [Privacy & License](#-privacy--license)
 
 ---
 
 ## 🌟 Key Highlights & Features
 
-### 🎧 Seamless Playback Engine
-* **Instant Client-Side Streaming:** Powered by a headless audio engine ensuring zero CORS errors, fast loading, and hardware-accelerated playback.
-* **Continuous Auto-Play:** Automatically and seamlessly transitions to the next track in your playlist or queue when a song finishes.
-* **Full Playback Controls:** Play/Pause, Next/Previous, Seek Bar, Volume slider, Mute toggle, Shuffle, and 3-state Repeat modes (`off`, `all`, `one`).
-* **MediaSession API Integration:** Full integration with OS lock screens, notifications, media keyboards, and Bluetooth accessories.
-
-### 📚 Zero Database, 100% Client-Side Persistence
-* **No Database Required:** Everything runs stateless—no SQL, no MongoDB, and no accounts needed.
-* **Custom Playlists with Photo Support:**
-  * Create, manage, and delete custom playlists.
-  * **Custom Cover Art:** Upload an image directly from your device or paste any image URL.
-  * **Smart 1st Song Cover Fallback:** If no custom photo is added, the playlist automatically uses the album artwork of its 1st track.
-* **Dedicated "Liked Songs" Panel:** A private collection showing strictly your favorited tracks with *Play All*, *Shuffle*, and in-panel search.
-* **Central "Your Library" Hub:** View all custom playlists and your Liked Songs collection side by side.
-* **Persistent Search Results:** Search results and active search queries are saved locally, ensuring your search results stay preserved when switching tabs.
-
-### 🔥 Dynamic & Personalized Discovery
-* **Personalized Recommendations:** Dynamically tailors trending songs on the homepage based on your past search history and favorite artists.
-* **Rotating Trending Mixes:** Rotates through diverse themes on page refresh (*Top Viral Chartbusters*, *Indie & Acoustic Essentials*, *Bollywood Hits*, *Global Pop*, *Lo-Fi Beats*, *Punjabi Waves*).
-* **Mood & Genre Filters:** Instant one-click chips to explore specific genres and artist essentials.
-
-### 🎤 Synchronized Lyrics & Fullscreen Visualizer
-* **Timestamped Synced Lyrics:** Real-time auto-scrolling lyrics synchronized with current playback (powered by LRCLIB).
-* **Interactive Audio Spectrum Visualizer:** Real-time canvas frequency spectrum visualizer with animated spinning vinyl cover art.
-
-### 🎨 Modern Vibrant Aesthetics
-* **Decent, Vibrant Theme:** Curated palette featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with obsidian dark glassmorphism.
+* 🚀 **Zero Database & 100% Stateless:** No MongoDB, PostgreSQL, or Redis required. Playlists, favorites, listening history, search history, and player settings are stored securely in browser `localStorage`.
+* ⚡ **Instant Client-Side Streaming:** Powered by an embedded headless player engine that bypasses proxy bottlenecks, eliminates CORS errors, and supports hardware-accelerated playback.
+* 🔄 **Non-Stop Logo Page Refresh:** Clicking the **StreamSync logo** in the navigation resets and refreshes the application view to the home feed while **audio playback continues uninterrupted in the background**.
+* 📑 **Dedicated Full-Page Playlist Views:** Playlists open as comprehensive standalone pages (`PlaylistView.jsx`) with custom cover uploads, 1st-song artwork fallback, and in-page song search.
+* 💖 **Dedicated "Liked Songs" Panel:** An isolated, private favorites panel with one-click **Play All**, **Shuffle**, and real-time title/artist search filtering.
+* 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
+* 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
+* 🌊 **360° Complete Circle Vinyl Visualizer:** Responsive spinning vinyl artwork locked to an exact `1:1` aspect ratio accompanied by a real-time Web Audio API frequency spectrum canvas.
+* 🎨 **Curated Vibrant Glassmorphic UI:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with a strict **Zero Pink Guarantee**.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ System Architecture & Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Client (React + Vite)                         │
-│                                                                         │
-│  ┌───────────────────────┐  ┌────────────────────┐  ┌────────────────┐  │
-│  │   UI & Navigation     │  │   Playback Engine  │  │  localStorage  │  │
-│  │  (Home, Search,       │  │ (Auto-play next,   │  │ (Playlists,    │  │
-│  │   Library, Liked)     │  │  MediaSession API) │  │  Favorites)    │  │
-│  └───────────┬───────────┘  └──────────┬─────────┘  └────────────────┘  │
-└──────────────┼─────────────────────────┼────────────────────────────────┘
-               │                         │
-               ▼                         ▼
-┌──────────────────────────────┐  ┌───────────────────────────────────────┐
-│   Express Stateless Backend  │  │        High-Fidelity Audio            │
-│                              │  │                                       │
-│  ├── /api/search             │  │   Direct client-side streams          │
-│  ├── /api/trending           │  │   with zero proxy buffering           │
-│  └── /api/lyrics             │  └───────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                CLIENT (React 18 + Vite)                                │
+│                                                                                        │
+│  ┌───────────────────────┐   ┌────────────────────────┐   ┌─────────────────────────┐  │
+│  │    UI Components      │   │  AudioPlayerProvider   │   │   localStorage Service  │  │
+│  │  (Home, Search,       │   │  (Headless Streaming,  │   │  (Playlists, Favorites, │  │
+│  │   Library, Playlists, │◄─►│   Auto-next track,     │◄─►│   History, Search Cache,│  │
+│  │   Liked, Fullscreen)  │   │   MediaSession API,    │   │   Playback Settings)    │  │
+│  │                       │   │   Non-stop refresh)    │   │                         │  │
+│  └───────────┬───────────┘   └───────────┬────────────┘   └─────────────────────────┘  │
+└──────────────┼───────────────────────────┼─────────────────────────────────────────────┘
+               │                           │
+               ▼                           ▼
+┌──────────────────────────────┐   ┌─────────────────────────────────────────────────────┐
+│   Express Stateless Server   │   │                High-Fidelity Audio                  │
+│   (Port 5000)                │   │                                                     │
+│                              │   │   Direct client-side media stream                   │
+│  ├── /api/search             │   │   with zero proxy buffering & zero CORS drops       │
+│  ├── /api/trending           │   └─────────────────────────────────────────────────────┘
+│  └── /api/lyrics             │
 └──────────────┬───────────────┘
                │
-               ├───────────────► Official Data API v3 / Scraper Fallback
-               └───────────────► LRCLIB (Synchronized Lyrics)
+               ├──────────────────► Official YouTube Data API v3 (Fast Primary Provider)
+               ├──────────────────► High-Speed Scraper Engine (Automatic Quota Fallback)
+               └──────────────────► LRCLIB API (Timestamped Synced & Plain Lyrics)
 ```
 
 ---
 
-## 🚀 API Documentation
+## 🔍 Deep-Dive Feature Breakdown
 
-The backend operates on port `5000` (or specified `PORT` in `.env`) providing clean JSON REST endpoints:
+### 1. Seamless Audio Playback Engine
+* **Headless Streaming Integration:** Integrates the YouTube IFrame API headlessly via `AudioPlayerProvider.jsx`. This guarantees zero media-server load on your backend and full access to CDN-cached audio streams.
+* **Continuous Auto-Play (Sequential & Shuffle):** Listens to track completion events (`YT.PlayerState.ENDED`) and seamlessly triggers `handleNextTrack()`, advancing through the queue or playlist automatically.
+* **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
+* **MediaSession API Support:** Hooks directly into your operating system's native media notification center. Track artwork, title, artist, seek bars, and play/pause controls function from locked screens, notifications, and Bluetooth headsets.
+* **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
+
+### 2. Dedicated Full-Page Playlist Management
+* **Dedicated Standalone Views (`PlaylistView.jsx`):** Instead of popup dialogs, selecting a playlist opens a dedicated full-page experience with hero artwork, stats (track count, total duration, creation date), and an action bar.
+* **Custom Artwork Management:**
+  * **Device Upload:** Select image files from your computer; they are instantly encoded as base64 data URLs via `FileReader` and saved to `localStorage`.
+  * **Direct Image Link:** Paste any HTTP/HTTPS image URL.
+  * **Automatic 1st Song Fallback:** If no custom image is provided, `storageService.getPlaylistCover()` automatically uses the album art of the first song in the playlist.
+* **In-Page Song Search & Add:** Search for songs, artists, or acoustic covers directly within the playlist page. Click `+ Add` to append tracks to the playlist instantly without leaving the view.
+* **Full Tracklist Operations:** Play individual tracks, remove specific songs, trigger **Play All**, or start **Shuffle Play**.
+
+### 3. Dedicated Liked Songs Hub
+* **Independent Panel (`LikedSongsView.jsx`):** Accessible from the sidebar, this view is strictly reserved for user-favorited tracks.
+* **Vibrant Indigo Branding:** Distinctive styling featuring an Electric Indigo and Royal Violet hero gradient banner with glowing heart iconography.
+* **Real-Time Search Filtering:** Filter your liked songs collection instantly by title or artist.
+* **One-Click Playback:** Batch-play all liked songs sequentially or in randomized shuffle mode.
+
+### 4. Advanced Search & History Engine
+* **Debounced Fast Search:** Triggers automatic queries as you type with a 300ms debounce interval, minimizing unnecessary network overhead.
+* **Persistent Search Cache:** Cached search queries and full track result arrays are saved to `streamsync_last_search`. When switching tabs and returning to Search, your results remain preserved.
+* **Clean Keyword Header:** The search view heading cleanly displays just the searched term (e.g. `Aditya Rikhari` or `Arijit Singh`) rather than verbose text.
+* **Individual Search Removal (`X` Button):** Each item in the "Previous Searches" list features a dedicated cross button to delete that specific search term from history.
+* **Intelligent Fragment Consolidation:** Automatically replaces partial typing keystrokes (e.g. `y`, `y ra`, `y rath`) with the completed query (`y ratha`) to prevent history clutter.
+
+### 5. Smart Recommendation & Dynamic Trending Mix
+* **Deep User Taste Analysis:** `storageService.getPersonalizedHints()` analyzes all historical search queries, cached results, recently played tracks, and favorited artists into a unified taste profile.
+* **Multi-Topic Parallel Sampling:** Samples 2-3 distinct topics from your profile, queries them in parallel via `Promise.allSettled`, and merges the results.
+* **Fisher-Yates Shuffling:** Applies a randomized shuffle to the aggregated track array, guaranteeing a fresh and diverse set of tracks upon every reload.
+* **Manual Refresh Button:** A sleek circular button (`RotateCw`) beside the "Trending Hits" title allows on-demand recommendation re-shuffling.
+* **Clean Section Heading:** The shelf heading is kept clean and generic (**Trending Hits**) without exposing private search keywords in the title.
+
+### 6. Fullscreen Visualizer & Synchronized Lyrics
+* **360° Complete Circle Vinyl Artwork:** Uses a strict `aspect-ratio: 1 / 1`, `flexShrink: 0`, and viewport-relative scaling (`min(38vh, 320px)`) to guarantee the spinning album art disc remains a complete, un-squashed circle on all screen dimensions.
+* **Web Audio API Spectrum Analyser:** Extracts real-time frequency data into 64 frequency bins via an `AnalyserNode`, rendered on an HTML5 `<canvas>` with an emerald-to-cyan gradient waveform.
+* **Line-by-Line Synchronized Lyrics:** Fetches timestamped lyrics from LRCLIB. Automatically scrolls the active line into view with smooth transitions and allows clicking any line to seek directly to that timestamp.
+
+### 7. Decent Vibrant Theme & Glassmorphism
+* **Modern Palette:** Built using curated colors tailored for high visual appeal:
+  * **Electric Indigo:** `#6366f1` / `#4f46e5` (Liked Songs hero, active state highlights)
+  * **Emerald Green:** `#10b981` (Primary accents, play buttons, sliders)
+  * **Mint Cyan:** `#06b6d4` (Active lyrics, secondary highlights)
+  * **Sunset Amber:** `#f59e0b` (Badges, warnings, secondary chips)
+  * **Deep Obsidian Surface:** `#07090e` / `#0e131f` (Glassmorphic dark backgrounds)
+* **Zero Pink Guarantee:** Completely free of pink or magenta tones throughout all components, SVGs, and stylesheets.
+
+---
+
+## 📊 Data Models & Schema Specifications
+
+All client state is persisted in `localStorage` under specific, namespaced keys:
+
+### 1. Track Schema
+```typescript
+interface Track {
+  id: string;              // e.g. "track_Xukxjs9VYiI"
+  originalId: string;      // Video ID e.g. "Xukxjs9VYiI"
+  title: string;           // Song title
+  artist: string;          // Artist or channel name
+  album: string;           // Album name or "Single"
+  duration: number;        // Track duration in seconds
+  thumbnailUrl: string;    // High-resolution image URL
+  source: "stream";        // Audio stream source
+  savedAt?: string;        // ISO timestamp when favorited
+  playedAt?: string;       // ISO timestamp when last played
+}
+```
+
+### 2. Playlist Schema
+```typescript
+interface Playlist {
+  id: string;              // Unique ID e.g. "pl_1725268400000"
+  name: string;            // Playlist title
+  description: string;     // Optional playlist description
+  coverUrl: string;        // Base64 Data URL or direct HTTP URL (optional)
+  createdAt: string;       // ISO timestamp
+  tracks: Track[];         // Array of track objects in this playlist
+}
+```
+
+### 3. Client Storage Keys (`localStorage`)
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `streamsync_favorites` | `Track[]` | List of all favorited/liked tracks |
+| `streamsync_playlists` | `Playlist[]` | Custom user-created playlists |
+| `streamsync_history` | `Track[]` | Recently played tracks (capped at 50) |
+| `streamsync_search_history` | `string[]` | List of past search keywords (capped at 30) |
+| `streamsync_last_search` | `{ query, results, savedAt }` | Cached results of the most recent search |
+| `streamsync_settings` | `Object` | Volume, quality, repeat mode, and shuffle state |
+
+---
+
+## 🚀 REST API Documentation
+
+The backend server runs on port `5000` (or the configured `PORT` environment variable) and exposes clean REST endpoints:
 
 ### 1. Music Search
 * **Endpoint:** `GET /api/search`
 * **Query Parameters:**
-  * `q` (required): Search keyword (e.g. `Aditya Rikhari`, `Taylor Swift`, song name, or link)
-  * `limit` (optional, default: `24`): Number of track results to return
-* **Example Response:**
+  * `q` *(string, required)*: Search keyword (e.g. `Aditya Rikhari`, `Arijit Singh`, song name)
+  * `limit` *(number, optional, default: 24)*: Maximum number of tracks to return
+* **Sample Request:**
+  ```http
+  GET /api/search?q=Aditya%20Rikhari&limit=2
+  ```
+* **Sample JSON Response:**
   ```json
   {
     "query": "Aditya Rikhari",
-    "count": 24,
+    "count": 2,
     "results": [
+      {
+        "id": "track_Xukxjs9VYiI",
+        "originalId": "Xukxjs9VYiI",
+        "title": "Aditya Rikhari - NASAMAJH",
+        "artist": "Aditya Rikhari",
+        "album": "Single",
+        "duration": 215,
+        "thumbnailUrl": "https://i.ytimg.com/vi/Xukxjs9VYiI/hqdefault.jpg",
+        "source": "stream"
+      },
+      {
+        "id": "track_4k4n2g",
+        "originalId": "4k4n2g",
+        "title": "Aditya Rikhari - Samjho Na",
+        "artist": "Aditya Rikhari",
+        "album": "Single",
+        "duration": 184,
+        "thumbnailUrl": "https://i.ytimg.com/vi/4k4n2g/hqdefault.jpg",
+        "source": "stream"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 2. Dynamic & Randomized Trending Mix
+* **Endpoint:** `GET /api/trending`
+* **Query Parameters:**
+  * `history` *(string, optional)*: Comma-separated list of past user search keywords/artists
+  * `limit` *(number, optional, default: 24)*: Number of tracks to return
+* **Sample Request:**
+  ```http
+  GET /api/trending?history=Aditya%20Rikhari,Anuv%20Jain,Arijit%20Singh&limit=24
+  ```
+* **Sample JSON Response:**
+  ```json
+  {
+    "sectionTitle": "Trending Hits",
+    "tracks": [
       {
         "id": "track_Xukxjs9VYiI",
         "originalId": "Xukxjs9VYiI",
@@ -93,47 +249,39 @@ The backend operates on port `5000` (or specified `PORT` in `.env`) providing cl
   }
   ```
 
-### 2. Dynamic & Personalized Trending Mix
-* **Endpoint:** `GET /api/trending`
-* **Query Parameters:**
-  * `history` (optional): Comma-separated list of user's past search queries/artists for personalized recommendations
-  * `limit` (optional, default: `24`): Number of trending tracks
-* **Example Response:**
-  ```json
-  {
-    "sectionTitle": "Trending Hits based on \"Aditya Rikhari\"",
-    "tracks": [ ... ],
-    "featured": [ ... ]
-  }
-  ```
+---
 
 ### 3. Synchronized Lyrics Resolver
 * **Endpoint:** `GET /api/lyrics`
 * **Query Parameters:**
-  * `title` (required): Song title
-  * `artist` (optional): Artist name
-  * `duration` (optional): Duration in seconds
-* **Example Response:**
+  * `title` *(string, required)*: Track title
+  * `artist` *(string, optional)*: Artist name
+  * `duration` *(number, optional)*: Duration in seconds
+* **Sample Request:**
+  ```http
+  GET /api/lyrics?title=NASAMAJH&artist=Aditya%20Rikhari&duration=215
+  ```
+* **Sample JSON Response:**
   ```json
   {
     "trackName": "NASAMAJH",
     "artistName": "Aditya Rikhari",
     "duration": 215,
     "syncedLyrics": [
-      { "time": 12.5, "text": "First line of the song..." },
-      { "time": 16.8, "text": "Second synchronized line..." }
+      { "time": 14.2, "text": "Kyun itne sawal hain dil mein" },
+      { "time": 18.6, "text": "Jo tu na mila toh kya milega" }
     ],
-    "plainLyrics": "Full plain text lyrics..."
+    "plainLyrics": "Kyun itne sawal hain dil mein..."
   }
   ```
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Installation & Setup Guide
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v18.x or higher)
-* `npm` or `yarn`
+* [Node.js](https://nodejs.org/) (version 18.x or higher recommended)
+* `npm` (comes bundled with Node.js) or `yarn`
 
 ### 1. Clone the Repository
 ```bash
@@ -142,20 +290,25 @@ cd Stream_Sync_Audio_Player_
 ```
 
 ### 2. Configure Backend Environment
-Create a `.env` file in the `server/` directory (or use `.env.example`):
+Create a `.env` file in the `server/` directory (you can copy `server/.env.example`):
+```bash
+cp server/.env.example server/.env
+```
+
+Edit `server/.env`:
 ```env
 PORT=5000
-YOUTUBE_API_KEY=your_youtube_api_key_here
+YOUTUBE_API_KEY=your_youtube_data_api_v3_key_here
 ```
-*(Note: If no API key is provided, the backend automatically uses its robust fallback scraper engine).*
+> **Note:** If you don't provide an API key, the server automatically uses its built-in scraper fallback engine with zero setup required.
 
-### 3. Install & Start Backend
+### 3. Install & Start Backend Server
 ```bash
 cd server
 npm install
 npm start
 ```
-*Backend will run at `http://localhost:5000`*
+*The backend server will start on `http://localhost:5000`.*
 
 ### 4. Install & Start Frontend Client
 In a separate terminal window:
@@ -164,42 +317,61 @@ cd client
 npm install
 npm run dev
 ```
-*Frontend will run at `http://localhost:3000`*
+*The client dev server will start on `http://localhost:3000`.*
 
 ---
 
-## 📂 Project Structure
+## 📦 Production Build & Deployment
+
+To compile and produce optimized production bundles:
+
+```bash
+# Build the client for production
+cd client
+npm run build
+
+# Preview the production build locally
+npm run preview
+```
+
+The optimized build is saved in `client/dist/`. You can serve the static files using Nginx, Apache, or configure Express to serve `client/dist/` statically.
+
+---
+
+## 📂 Comprehensive Directory Tree
 
 ```text
-audio_Player/
+Stream_Sync_Audio_Player_/
 ├── client/
-│   ├── public/
+│   ├── public/                  # Static assets & icons
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── AddToPlaylistModal.jsx   # Modal for adding songs & creating custom playlists
-│   │   │   ├── FullscreenPlayer.jsx     # Visualizer spectrum & synced lyrics view
-│   │   │   ├── Header.jsx               # Search bar & queue trigger
-│   │   │   ├── HomeView.jsx             # Hero banner, mood chips & dynamic trending
+│   │   ├── components/          # 14 Modular UI components
+│   │   │   ├── AddToPlaylistModal.jsx   # Modal for adding tracks to custom playlists
+│   │   │   ├── FullscreenPlayer.jsx     # 360° circle visualizer & synced lyrics mode
+│   │   │   ├── Header.jsx               # Sticky search bar & queue button
+│   │   │   ├── HomeView.jsx             # Hero banner, genre chips & trending hits
 │   │   │   ├── LibraryView.jsx          # Playlists & Liked Songs management hub
-│   │   │   ├── LikedSongsView.jsx       # Dedicated Liked Songs panel (Play all, shuffle)
-│   │   │   ├── PlayerBar.jsx            # Bottom sticky audio control bar
-│   │   │   ├── PlaylistDetailModal.jsx  # Playlist viewer with cover upload & track manager
-│   │   │   ├── QueueDrawer.jsx          # Slide-out queue & up-next drawer
-│   │   │   ├── SearchView.jsx           # Search results with persistent state & history
-│   │   │   ├── Sidebar.jsx              # Left navigation sidebar with playlist list
-│   │   │   ├── TrackCard.jsx            # Grid track card with options menu
-│   │   │   └── TrackRow.jsx             # List track row with equalizer animation
+│   │   │   ├── LikedSongsView.jsx       # Dedicated Liked Songs panel with batch actions
+│   │   │   ├── PlayerBar.jsx            # Bottom sticky audio controls & seekbar
+│   │   │   ├── PlaylistDetailModal.jsx  # Quick playlist modal viewer
+│   │   │   ├── PlaylistView.jsx         # Standalone full-page playlist with in-page search
+│   │   │   ├── QueueDrawer.jsx          # Slide-out playback queue drawer
+│   │   │   ├── SearchView.jsx           # Persistent search results & history manager
+│   │   │   ├── Sidebar.jsx              # Left sidebar with interactive refresh logo
+│   │   │   ├── TrackCard.jsx            # Grid track card with hover actions & dropdowns
+│   │   │   └── TrackRow.jsx             # Table track row with animated equalizer
 │   │   ├── context/
-│   │   │   ├── AudioPlayerContext.jsx   # Context hook & definitions
-│   │   │   └── AudioPlayerProvider.jsx  # Continuous playback engine & state manager
+│   │   │   ├── AudioPlayerContext.jsx   # Context hook definition
+│   │   │   └── AudioPlayerProvider.jsx  # Playback engine, non-stop refresh & queue
 │   │   ├── services/
 │   │   │   ├── api.js                   # Client REST API consumer
-│   │   │   └── storage.js               # Zero-DB client localStorage storage service
+│   │   │   └── storage.js               # Zero-DB client localStorage service
 │   │   ├── utils/
-│   │   │   └── formatters.js            # Time & badge formatting helpers
-│   │   ├── App.jsx                      # Main app container & view router
-│   │   ├── main.jsx                     # Vite entry point
-│   │   └── index.css                    # Obsidian glassmorphic design system
+│   │   │   └── formatters.js            # Time & badge formatters
+│   │   ├── App.jsx                      # Main app layout container & view router
+│   │   ├── main.jsx                     # Vite React entry point
+│   │   └── index.css                    # Design tokens & glassmorphic styling
+│   ├── index.html                       # HTML5 entry with Outfit & Plus Jakarta fonts
 │   ├── package.json
 │   └── vite.config.js
 │
@@ -207,14 +379,14 @@ audio_Player/
 │   ├── src/
 │   │   ├── controllers/
 │   │   │   ├── resolveController.js     # Lyrics handler
-│   │   │   └── searchController.js      # Search & dynamic trending handler
+│   │   │   └── searchController.js      # Search & trending recommendation controller
 │   │   ├── routes/
-│   │   │   └── api.js                   # API route definitions
+│   │   │   └── api.js                   # Express route mapping (/api/*)
 │   │   ├── services/
-│   │   │   ├── lyricsService.js         # LRCLIB synchronized lyrics provider
-│   │   │   └── youtubeService.js        # Data API v3 & fallback search service
-│   │   └── app.js                       # Express app bootstrap
-│   ├── .env.example
+│   │   │   ├── lyricsService.js         # LRCLIB lyrics client
+│   │   │   └── youtubeService.js        # YouTube Data API v3 & scraper fallback
+│   │   └── app.js                       # Express bootstrap, CORS & middleware
+│   ├── .env.example                     # Environment template
 │   └── package.json
 │
 └── README.md
@@ -222,10 +394,37 @@ audio_Player/
 
 ---
 
-## 🔒 Privacy & Data Policy
-StreamSync does **not** track, store, or transmit any user data, passwords, or personal credentials. All playlists, favorites, listening history, and preferences stay 100% on your local machine via browser `localStorage`.
+## ⌨️ Keyboard Shortcuts & Media Controls
+
+| Key / Action | Function |
+| :--- | :--- |
+| **Spacebar** | Toggle Play / Pause |
+| **Media Play / Pause** | Hardware Play / Pause on keyboard or headset |
+| **Media Track Next** | Skip to next track in queue or playlist |
+| **Media Track Previous** | Skip to previous track |
+| **Click Logo** | Soft-refresh application to Home without interrupting music |
+| **Click Lyrics Line** | Seek playback directly to that lyric timestamp |
+
+---
+
+## ❓ Troubleshooting & FAQ
+
+#### 1. Music stops or will not play?
+- Browsers require an initial user gesture before playing audio. Click any track card or the play button to initiate playback.
+- If you have an ad blocker blocking YouTube embeds, add an exception for `localhost:3000`.
+
+#### 2. YouTube API Quota Exceeded?
+- The backend features an automatic, seamless **fallback scraper engine**. If your Google Cloud API key quota is exhausted, StreamSync automatically routes searches through the scraper with zero downtime.
+
+#### 3. Port 5000 or 3000 already in use?
+- If port `5000` is occupied, change `PORT=5001` in `server/.env` and update the proxy port in `client/vite.config.js`.
+
+---
+
+## 🔒 Privacy Policy
+StreamSync is completely **stateless**. We do not collect, store, or sell any personal data, IP addresses, search keywords, or listening habits. All playlists, favorited songs, search history, and settings are preserved strictly within your local browser's storage.
 
 ---
 
 ## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
+This project is open-source and licensed under the **[MIT License](LICENSE)**.
