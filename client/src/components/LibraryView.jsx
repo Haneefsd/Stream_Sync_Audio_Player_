@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
+import { useConfirmation } from '../context/ConfirmationContext';
 import { storageService } from '../services/storage';
 import TrackRow from './TrackRow';
 import { 
@@ -15,6 +16,7 @@ import {
 
 export default function LibraryView({ onSelectPlaylist }) {
   const { playTrack, toggleShuffle, setActiveTab } = useAudioPlayer();
+  const { requestConfirmation } = useConfirmation();
   const [favorites, setFavorites] = useState(storageService.getFavorites());
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
   const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'playlists' | 'liked'
@@ -44,16 +46,25 @@ export default function LibraryView({ onSelectPlaylist }) {
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
-    const created = storageService.createPlaylist(
-      newPlaylistName.trim(), 
-      '', 
-      newPlaylistCoverUrl.trim()
-    );
-    setPlaylists(storageService.getPlaylists());
-    setNewPlaylistName('');
-    setNewPlaylistCoverUrl('');
-    setShowCreateModal(false);
-    if (onSelectPlaylist) onSelectPlaylist(created);
+    
+    requestConfirmation({
+      title: 'Create Playlist',
+      message: `Are you sure you want to create a new playlist named "${newPlaylistName.trim()}"?`,
+      confirmText: 'Create',
+      cancelText: 'Cancel',
+      actionType: 'create',
+      onConfirm: () => {
+        const created = storageService.createPlaylist(
+          newPlaylistName.trim(), 
+          '', 
+          newPlaylistCoverUrl.trim()
+        );
+        setNewPlaylistName('');
+        setNewPlaylistCoverUrl('');
+        setShowCreateModal(false);
+        if (onSelectPlaylist) onSelectPlaylist(created);
+      }
+    });
   };
 
   const handleFileUpload = (e) => {
@@ -66,10 +77,18 @@ export default function LibraryView({ onSelectPlaylist }) {
     reader.readAsDataURL(file);
   };
 
-  const handleDeletePlaylist = (e, id) => {
+  const handleDeletePlaylist = (e, id, name) => {
     e.stopPropagation();
-    const updated = storageService.deletePlaylist(id);
-    setPlaylists(updated);
+    requestConfirmation({
+      title: 'Delete Playlist',
+      message: `Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      actionType: 'delete',
+      onConfirm: () => {
+        storageService.deletePlaylist(id);
+      }
+    });
   };
 
   return (
@@ -154,7 +173,7 @@ export default function LibraryView({ onSelectPlaylist }) {
             Playlists & Collections
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '1.5rem' }}>
+          <div className="library-grid">
             {/* LIKED SONGS VIBRANT HERO CARD (Electric Indigo / Violet Gradient) */}
             {(activeTabFilter === 'all' || activeTabFilter === 'liked') && (
               <div
@@ -297,7 +316,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                   </span>
 
                   <button
-                    onClick={(e) => handleDeletePlaylist(e, pl.id)}
+                    onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)}
                     style={{
                       position: 'absolute',
                       top: '12px',

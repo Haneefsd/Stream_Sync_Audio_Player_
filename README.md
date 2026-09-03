@@ -38,6 +38,8 @@
 * 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
 * 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
 * 🌊 **360° Complete Circle Vinyl Visualizer:** Responsive spinning vinyl artwork locked to an exact `1:1` aspect ratio accompanied by a real-time Web Audio API frequency spectrum canvas.
+* 📱 **True Multi-Device Responsiveness:** Fluid CSS Grid structures, mobile drawer navigation, and intelligent component scaling for a flawless experience across desktop, tablet, and mobile displays.
+* 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, modification) with contextual warnings.
 * 🎨 **Curated Vibrant Glassmorphic UI:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with a strict **Zero Pink Guarantee**.
 
 ---
@@ -91,6 +93,8 @@
   * **Automatic 1st Song Fallback:** If no custom image is provided, `storageService.getPlaylistCover()` automatically uses the album art of the first song in the playlist.
 * **In-Page Song Search & Add:** Search for songs, artists, or acoustic covers directly within the playlist page. Click `+ Add` to append tracks to the playlist instantly without leaving the view.
 * **Full Tracklist Operations:** Play individual tracks, remove specific songs, trigger **Play All**, or start **Shuffle Play**.
+* **Real-Time Sidebar Sync:** Creating, modifying, or deleting a playlist immediately updates the application state and refreshes the sidebar navigation without a page reload.
+* **Guarded Operations:** Context-aware confirmation modals intercept playlist deletion and modification attempts to prevent accidental data loss.
 
 ### 3. Dedicated Liked Songs Hub
 * **Independent Panel (`LikedSongsView.jsx`):** Accessible from the sidebar, this view is strictly reserved for user-favorited tracks.
@@ -116,6 +120,7 @@
 * **360° Complete Circle Vinyl Artwork:** Uses a strict `aspect-ratio: 1 / 1`, `flexShrink: 0`, and viewport-relative scaling (`min(38vh, 320px)`) to guarantee the spinning album art disc remains a complete, un-squashed circle on all screen dimensions.
 * **Web Audio API Spectrum Analyser:** Extracts real-time frequency data into 64 frequency bins via an `AnalyserNode`, rendered on an HTML5 `<canvas>` with an emerald-to-cyan gradient waveform.
 * **Line-by-Line Synchronized Lyrics:** Fetches timestamped lyrics from LRCLIB. Automatically scrolls the active line into view with smooth transitions and allows clicking any line to seek directly to that timestamp.
+* **In-Visualizer Actions:** Directly add the currently playing track to any playlist or your favorites without leaving the immersive fullscreen visualizer mode.
 
 ### 7. Decent Vibrant Theme & Glassmorphism
 * **Modern Palette:** Built using curated colors tailored for high visual appeal:

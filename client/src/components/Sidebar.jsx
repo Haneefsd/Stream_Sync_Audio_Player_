@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
+import { useConfirmation } from '../context/ConfirmationContext';
 import { storageService } from '../services/storage';
 import {
   Home,
@@ -13,17 +14,27 @@ import {
   Trash2
 } from 'lucide-react';
 
-export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
+export default function Sidebar({ onSelectPlaylist, selectedPlaylistId, isOpen, onClose }) {
   const {
     activeTab,
     setActiveTab,
     refreshPage
   } = useAudioPlayer();
 
+  const { requestConfirmation } = useConfirmation();
+
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
   const [showNewPlaylistInput, setShowNewPlaylistInput] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setPlaylists(storageService.getPlaylists());
+    };
+    window.addEventListener('playlistsUpdated', handleUpdate);
+    return () => window.removeEventListener('playlistsUpdated', handleUpdate);
+  }, []);
 
   const handleLogoClick = () => {
     setIsLogoSpinning(true);
@@ -34,17 +45,34 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
-    const created = storageService.createPlaylist(newPlaylistName.trim());
-    setPlaylists(storageService.getPlaylists());
-    setNewPlaylistName('');
-    setShowNewPlaylistInput(false);
-    if (onSelectPlaylist) onSelectPlaylist(created);
+
+    requestConfirmation({
+      title: 'Create Playlist',
+      message: `Are you sure you want to create a new playlist named "${newPlaylistName.trim()}"?`,
+      confirmText: 'Create',
+      cancelText: 'Cancel',
+      actionType: 'create',
+      onConfirm: () => {
+        const created = storageService.createPlaylist(newPlaylistName.trim());
+        setNewPlaylistName('');
+        setShowNewPlaylistInput(false);
+        if (onSelectPlaylist) onSelectPlaylist(created);
+      }
+    });
   };
 
-  const handleDeletePlaylist = (e, id) => {
+  const handleDeletePlaylist = (e, id, name) => {
     e.stopPropagation();
-    const updated = storageService.deletePlaylist(id);
-    setPlaylists(updated);
+    requestConfirmation({
+      title: 'Delete Playlist',
+      message: `Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      actionType: 'delete',
+      onConfirm: () => {
+        storageService.deletePlaylist(id);
+      }
+    });
   };
 
   const navItems = [
@@ -55,16 +83,7 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
   ];
 
   return (
-    <aside style={{
-      background: 'var(--bg-surface)',
-      borderRight: '1px solid var(--border-subtle)',
-      display: 'flex',
-      flexDirection: 'column',
-      height: 'calc(100vh - var(--player-height))',
-      padding: '1.5rem 1.25rem',
-      userSelect: 'none',
-      zIndex: 10
-    }}>
+    <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
       {/* Brand / Logo (Clicking refreshes the page without stopping music) */}
       <div
         onClick={handleLogoClick}
@@ -97,11 +116,12 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
           justifyContent: 'center',
           boxShadow: '0 0 15px var(--accent-emerald-glow)',
           transform: isLogoSpinning ? 'rotate(360deg)' : 'none',
-          transition: isLogoSpinning ? 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
+          transition: isLogoSpinning ? 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
+          flexShrink: 0
         }}>
           <Radio size={22} color="#000" strokeWidth={2.5} />
         </div>
-        <div>
+        <div className="sidebar-logo-text">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             StreamSync
           </h2>
@@ -114,27 +134,25 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
       {/* Main Navigation */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.75rem' }}>
         {navItems.map(item => {
+
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                if (window.innerWidth <= 768 && onClose) onClose();
+              }}
+              className="sidebar-nav-item"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.85rem',
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-sm)',
                 background: isActive ? 'var(--bg-active)' : 'transparent',
                 color: isActive ? (item.id === 'favorites' ? 'var(--accent-indigo)' : 'var(--accent-emerald)') : 'var(--text-secondary)',
                 fontWeight: isActive ? 600 : 500,
-                fontSize: '0.92rem',
-                transition: 'all 0.15s ease'
               }}
             >
-              <Icon size={20} color={isActive ? (item.id === 'favorites' ? 'var(--accent-indigo)' : 'var(--accent-emerald)') : 'var(--text-secondary)'} />
-              <span>{item.label}</span>
+              <Icon size={20} style={{ flexShrink: 0 }} color={isActive ? (item.id === 'favorites' ? 'var(--accent-indigo)' : 'var(--accent-emerald)') : 'var(--text-secondary)'} />
+              <span className="sidebar-label">{item.label}</span>
             </button>
           );
         })}
@@ -143,12 +161,13 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
       {/* Custom Playlists Section */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '0 0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span className="sidebar-section-header" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Playlists
           </span>
           <button
             onClick={() => setShowNewPlaylistInput(!showNewPlaylistInput)}
             title="Create Playlist"
+            className="sidebar-add-btn"
             style={{ color: 'var(--text-secondary)', padding: '2px' }}
           >
             <PlusSquare size={17} />
@@ -224,12 +243,13 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId }) {
                     )}
                   </div>
 
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span className="sidebar-label">
                     {pl.name}
                   </span>
                 </div>
                 <button
-                  onClick={(e) => handleDeletePlaylist(e, pl.id)}
+                  onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)}
+                  className="sidebar-add-btn"
                   style={{ opacity: 0.4, padding: '2px' }}
                   title="Delete playlist"
                 >

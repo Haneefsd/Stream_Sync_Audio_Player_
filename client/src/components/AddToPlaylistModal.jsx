@@ -59,7 +59,7 @@ export default function AddToPlaylistModal({ track, onClose, onPlaylistUpdated }
         background: 'rgba(0, 0, 0, 0.75)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        zIndex: 100,
+        zIndex: 300,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

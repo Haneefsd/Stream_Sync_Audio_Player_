@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
-import { formatTime, getSourceBadge } from '../utils/formatters';
-import { X, Trash2, Play, Music, ListMusic } from 'lucide-react';
+import { formatTime } from '../utils/formatters';
+import { X, Trash2, ListMusic } from 'lucide-react';
 
 export default function QueueDrawer({ onClose }) {
   const { 

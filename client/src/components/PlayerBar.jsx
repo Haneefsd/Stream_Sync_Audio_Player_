@@ -1,46 +1,45 @@
 import React, { useState, useRef } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
-import { formatTime, getSourceBadge } from '../utils/formatters';
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Shuffle, 
-  Repeat, 
-  Repeat1, 
-  Volume2, 
-  VolumeX, 
-  Heart, 
-  Maximize2, 
-  ListMusic, 
-  Activity,
-  Youtube
+import { formatTime } from '../utils/formatters';
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Shuffle,
+  Repeat,
+  Repeat1,
+  Volume2,
+  VolumeX,
+  Heart,
+  Maximize2,
+  ListMusic,
+  Activity
 } from 'lucide-react';
 
 export default function PlayerBar() {
-  const { 
-    currentTrack, 
-    isPlaying, 
-    isBuffering, 
-    currentTime, 
-    duration, 
-    volume, 
-    isMuted, 
-    repeatMode, 
-    shuffle, 
+  const {
+    currentTrack,
+    isPlaying,
+    isBuffering,
+    currentTime,
+    duration,
+    volume,
+    isMuted,
+    repeatMode,
+    shuffle,
     isQueueOpen,
-    togglePlay, 
-    handleNextTrack, 
-    handlePrevTrack, 
-    seekTo, 
-    changeVolume, 
-    toggleMute, 
-    toggleRepeatMode, 
-    toggleShuffle, 
-    setIsFullscreenPlayerOpen, 
-    setIsQueueOpen 
+    togglePlay,
+    handleNextTrack,
+    handlePrevTrack,
+    seekTo,
+    changeVolume,
+    toggleMute,
+    toggleRepeatMode,
+    toggleShuffle,
+    setIsFullscreenPlayerOpen,
+    setIsQueueOpen
   } = useAudioPlayer();
 
   const [isLiked, setIsLiked] = useState(false);
@@ -74,7 +73,7 @@ export default function PlayerBar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--bg-elevated)' }}></div>
           <div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Select a YouTube song to start streaming</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Select a song to start streaming</div>
           </div>
         </div>
       </div>
@@ -82,14 +81,13 @@ export default function PlayerBar() {
   }
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const badge = getSourceBadge(currentTrack.source);
 
   return (
     <div className="player-bar">
       {/* 1. Left Track Metadata Section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', overflow: 'hidden' }}>
         {/* Clickable Cover Art to Open Fullscreen */}
-        <div 
+        <div
           onClick={() => setIsFullscreenPlayerOpen(true)}
           style={{
             position: 'relative',
@@ -103,8 +101,8 @@ export default function PlayerBar() {
           }}
           title="Click for Fullscreen Visualizer & Lyrics"
         >
-          <img 
-            src={currentTrack.thumbnailUrl} 
+          <img
+            src={currentTrack.thumbnailUrl}
             alt={currentTrack.title}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
@@ -118,8 +116,8 @@ export default function PlayerBar() {
             justifyContent: 'center',
             transition: 'opacity 0.2s ease'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
           >
             <Maximize2 size={16} color="#fff" />
           </div>
@@ -128,7 +126,7 @@ export default function PlayerBar() {
         {/* Track Title and Artist */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span 
+            <span
               onClick={() => setIsFullscreenPlayerOpen(true)}
               style={{
                 fontSize: '0.92rem',
@@ -140,9 +138,6 @@ export default function PlayerBar() {
               }}
             >
               {currentTrack.title}
-            </span>
-            <span className={`card-source-badge ${badge.className}`} style={{ position: 'static', padding: '0.15rem 0.4rem', fontSize: '0.58rem' }}>
-              {badge.label}
             </span>
           </div>
 
@@ -161,8 +156,21 @@ export default function PlayerBar() {
         </button>
       </div>
 
+      {/* Mobile Controls (Visible only on < 768px) */}
+      <div className="player-bar-mobile-controls" style={{ alignItems: 'center', gap: '0.85rem' }}>
+        <button onClick={handlePrevTrack} style={{ color: 'var(--text-primary)' }}>
+          <SkipBack size={22} fill="currentColor" />
+        </button>
+        <button onClick={togglePlay} style={{ color: 'var(--text-primary)' }}>
+          {isPlaying ? <Pause size={26} fill="currentColor" /> : <Play size={26} fill="currentColor" />}
+        </button>
+        <button onClick={() => handleNextTrack(false)} style={{ color: 'var(--text-primary)' }}>
+          <SkipForward size={22} fill="currentColor" />
+        </button>
+      </div>
+
       {/* 2. Center Audio Controls & Seek Bar */}
-      <div className="player-bar-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+      <div className="player-bar-center" style={{ flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
         {/* Buttons Control Row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           {/* Shuffle */}
@@ -237,7 +245,7 @@ export default function PlayerBar() {
             {formatTime(currentTime)}
           </span>
 
-          <div 
+          <div
             ref={seekSliderRef}
             className="slider-container"
             onClick={handleSeekClick}
@@ -253,7 +261,7 @@ export default function PlayerBar() {
       </div>
 
       {/* 3. Right Volume & Tools Section */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.85rem' }}>
+      <div className="player-bar-right" style={{ alignItems: 'center', justifyContent: 'flex-end', gap: '0.85rem' }}>
         {/* Lyrics & Visualizer Fullscreen Trigger */}
         <button
           onClick={() => setIsFullscreenPlayerOpen(true)}

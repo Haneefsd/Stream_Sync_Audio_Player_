@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
-import { Search, X, ListMusic, Youtube } from 'lucide-react';
+import { Search, X, ListMusic, Menu } from 'lucide-react';
 
-export default function Header({ searchQuery, onSearchChange }) {
+export default function Header({ searchQuery, onSearchChange, onMobileMenuToggle }) {
   const {
     isQueueOpen,
     setIsQueueOpen,
@@ -38,13 +38,13 @@ export default function Header({ searchQuery, onSearchChange }) {
   };
 
   return (
-    <header style={{
+    <header className="header-container" style={{
       height: 'var(--header-height)',
-      padding: '0 2.25rem',
+      padding: '0 1rem', // Adjust for mobile, will be overriden by content-scrollable but header needs its own
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: '1.5rem',
+      gap: '1rem',
       background: 'rgba(7, 9, 14, 0.75)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
@@ -53,8 +53,15 @@ export default function Header({ searchQuery, onSearchChange }) {
       top: 0,
       zIndex: 20
     }}>
-      {/* Search Input Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, maxWidth: '680px' }}>
+      {/* Search Input Bar & Mobile Menu Toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '680px' }}>
+        <button 
+          className="mobile-menu-toggle"
+          onClick={onMobileMenuToggle}
+          title="Open Menu"
+        >
+          <Menu size={24} />
+        </button>
         <div style={{
           position: 'relative',
           flex: 1,

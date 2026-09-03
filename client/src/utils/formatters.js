@@ -9,10 +9,6 @@ export function formatTime(seconds) {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-export function getSourceBadge(source) {
-  return { label: 'HD Audio', className: 'badge-music' };
-}
-
 export function truncateText(text, maxLength = 35) {
   if (!text) return '';
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;

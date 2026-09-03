@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
+import { useConfirmation } from '../context/ConfirmationContext';
 import { storageService } from '../services/storage';
 import { apiService } from '../services/api';
 import TrackRow from './TrackRow';
@@ -9,7 +10,6 @@ import {
   Trash2, 
   Music, 
   Camera, 
-  Image, 
   Check, 
   Edit2, 
   ArrowLeft, 
@@ -22,6 +22,7 @@ import {
 
 export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPlaylistDelete }) {
   const { playTrack, toggleShuffle } = useAudioPlayer();
+  const { requestConfirmation } = useConfirmation();
   const [currentPlaylist, setCurrentPlaylist] = useState(playlist);
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [coverInputUrl, setCoverInputUrl] = useState(playlist.coverUrl || '');
@@ -116,19 +117,36 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
   const handleSaveName = (e) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
-    const updated = storageService.updatePlaylist(currentPlaylist.id, { name: nameInput.trim() });
-    if (updated) {
-      setCurrentPlaylist(updated);
-      if (onPlaylistUpdate) onPlaylistUpdate(updated);
-    }
-    setIsEditingName(false);
+
+    requestConfirmation({
+      title: 'Rename Playlist',
+      message: `Are you sure you want to rename this playlist to "${nameInput.trim()}"?`,
+      confirmText: 'Rename',
+      cancelText: 'Cancel',
+      actionType: 'update',
+      onConfirm: () => {
+        const updated = storageService.updatePlaylist(currentPlaylist.id, { name: nameInput.trim() });
+        if (updated) {
+          setCurrentPlaylist(updated);
+          if (onPlaylistUpdate) onPlaylistUpdate(updated);
+        }
+        setIsEditingName(false);
+      }
+    });
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete "${currentPlaylist.name}"?`)) {
-      storageService.deletePlaylist(currentPlaylist.id);
-      if (onPlaylistDelete) onPlaylistDelete();
-    }
+    requestConfirmation({
+      title: 'Delete Playlist',
+      message: `Are you sure you want to delete "${currentPlaylist.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      actionType: 'delete',
+      onConfirm: () => {
+        storageService.deletePlaylist(currentPlaylist.id);
+        if (onPlaylistDelete) onPlaylistDelete();
+      }
+    });
   };
 
   // Search inside playlist page to easily add songs
@@ -375,11 +393,12 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
             Update Playlist Cover Photo
           </h3>
 
-          <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="cover-edit-actions">
             {/* Upload File */}
             <label style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.55rem',
               padding: '0.65rem 1.15rem',
               borderRadius: 'var(--radius-sm)',
@@ -396,7 +415,7 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
             </label>
 
             {/* URL Input */}
-            <form onSubmit={handleSaveCoverUrl} style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '260px' }}>
+            <form onSubmit={handleSaveCoverUrl} className="cover-edit-form">
               <input
                 type="url"
                 placeholder="Or paste direct image URL (https://...)"
@@ -463,7 +482,7 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
 
       {/* Playlist Action Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="playlist-actions">
           {currentPlaylist.tracks?.length > 0 && (
             <>
               <button
@@ -507,43 +526,26 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
               </button>
             </>
           )}
-
           <button
-            onClick={() => setIsEditingCover(!isEditingCover)}
+            onClick={handleDelete}
             style={{
-              padding: '0.85rem 1.15rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1rem',
               borderRadius: 'var(--radius-full)',
               background: 'transparent',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem',
+              color: '#ef4444',
+              fontSize: '0.82rem',
               fontWeight: 600,
               cursor: 'pointer'
             }}
+            title="Delete this playlist"
           >
-            Change Photo
+            <Trash2 size={15} />
+            <span>Delete Playlist</span>
           </button>
         </div>
-
-        <button
-          onClick={handleDelete}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.65rem 1rem',
-            borderRadius: 'var(--radius-full)',
-            background: 'transparent',
-            color: '#ef4444',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-          title="Delete this playlist"
-        >
-          <Trash2 size={15} />
-          <span>Delete Playlist</span>
-        </button>
       </div>
 
       {/* Playlist Songs Table */}

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
+import { useConfirmation } from '../context/ConfirmationContext';
 import { storageService } from '../services/storage';
 import TrackRow from './TrackRow';
 import { X, Play, Trash2, Music, Camera, Image, Check, Edit2 } from 'lucide-react';
 
 export default function PlaylistDetailModal({ playlist, onClose, onUpdate }) {
   const { playTrack } = useAudioPlayer();
+  const { requestConfirmation } = useConfirmation();
   const [currentPlaylist, setCurrentPlaylist] = useState(playlist);
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [coverInputUrl, setCoverInputUrl] = useState(playlist.coverUrl || '');
@@ -24,13 +26,24 @@ export default function PlaylistDetailModal({ playlist, onClose, onUpdate }) {
   };
 
   const handleRemoveTrack = (trackId) => {
-    storageService.removeTrackFromPlaylist(currentPlaylist.id, trackId);
-    const updatedPlaylists = storageService.getPlaylists();
-    const updated = updatedPlaylists.find(p => p.id === currentPlaylist.id);
-    if (updated) {
-      setCurrentPlaylist(updated);
-    }
-    if (onUpdate) onUpdate();
+    const trackToRemove = currentPlaylist.tracks.find(t => t.id === trackId);
+    
+    requestConfirmation({
+      title: 'Remove Track',
+      message: `Are you sure you want to remove "${trackToRemove?.title || 'this track'}" from the playlist?`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      actionType: 'delete',
+      onConfirm: () => {
+        storageService.removeTrackFromPlaylist(currentPlaylist.id, trackId);
+        const updatedPlaylists = storageService.getPlaylists();
+        const updated = updatedPlaylists.find(p => p.id === currentPlaylist.id);
+        if (updated) {
+          setCurrentPlaylist(updated);
+        }
+        if (onUpdate) onUpdate();
+      }
+    });
   };
 
   const handleSaveCoverUrl = (e) => {
@@ -73,12 +86,22 @@ export default function PlaylistDetailModal({ playlist, onClose, onUpdate }) {
   const handleSaveName = (e) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
-    const updated = storageService.updatePlaylist(currentPlaylist.id, { name: nameInput.trim() });
-    if (updated) {
-      setCurrentPlaylist(updated);
-    }
-    setIsEditingName(false);
-    if (onUpdate) onUpdate();
+    
+    requestConfirmation({
+      title: 'Rename Playlist',
+      message: `Are you sure you want to rename this playlist to "${nameInput.trim()}"?`,
+      confirmText: 'Rename',
+      cancelText: 'Cancel',
+      actionType: 'update',
+      onConfirm: () => {
+        const updated = storageService.updatePlaylist(currentPlaylist.id, { name: nameInput.trim() });
+        if (updated) {
+          setCurrentPlaylist(updated);
+        }
+        setIsEditingName(false);
+        if (onUpdate) onUpdate();
+      }
+    });
   };
 
   return (

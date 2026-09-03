@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
-import { formatTime, getSourceBadge } from '../utils/formatters';
+import { formatTime } from '../utils/formatters';
 import { Play, Pause, Heart, MoreVertical, ListPlus, FolderPlus } from 'lucide-react';
 
 export default function TrackCard({ track, trackList = null }) {
@@ -11,7 +11,6 @@ export default function TrackCard({ track, trackList = null }) {
 
   const isCurrent = currentTrack?.id === track.id;
   const isThisPlaying = isCurrent && isPlaying;
-  const badge = getSourceBadge(track.source);
 
   const handlePlayClick = (e) => {
     e.stopPropagation();
@@ -41,24 +40,19 @@ export default function TrackCard({ track, trackList = null }) {
   };
 
   return (
-    <div 
+    <div
       className="track-card"
       onClick={() => isCurrent ? togglePlay() : playTrack(track, trackList)}
       style={{ cursor: 'pointer' }}
     >
       {/* Cover Art Container */}
       <div className="card-cover-wrapper">
-        <img 
-          src={track.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60'} 
+        <img
+          src={track.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60'}
           alt={track.title}
           className="card-cover-img"
           loading="lazy"
         />
-
-        {/* Source Badge */}
-        <span className={`card-source-badge ${badge.className}`}>
-          {badge.label}
-        </span>
 
         {/* Floating Play/Pause Button */}
         <button
@@ -130,7 +124,7 @@ export default function TrackCard({ track, trackList = null }) {
 
           {/* Context Menu */}
           {showMenu && (
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 bottom: '100%',

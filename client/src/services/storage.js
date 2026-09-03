@@ -80,6 +80,7 @@ export const storageService = {
     };
     playlists.push(newPlaylist);
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
     return newPlaylist;
   },
 
@@ -92,6 +93,7 @@ export const storageService = {
         ...updates
       };
       localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
       return playlists[index];
     }
     return null;
@@ -112,6 +114,7 @@ export const storageService = {
     let playlists = storageService.getPlaylists();
     playlists = playlists.filter(p => p.id !== playlistId);
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
     return playlists;
   },
 
@@ -124,6 +127,7 @@ export const storageService = {
     if (!alreadyIn) {
       playlist.tracks.push(track);
       localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
     }
     return true;
   },
@@ -135,6 +139,7 @@ export const storageService = {
 
     playlist.tracks = playlist.tracks.filter(t => t.id !== trackId);
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
     return true;
   },
 

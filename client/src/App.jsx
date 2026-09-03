@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { storageService } from './services/storage';
+import { ConfirmationProvider } from './context/ConfirmationContext';
 import { AudioPlayerProvider } from './context/AudioPlayerProvider';
 import { useAudioPlayer } from './context/AudioPlayerContext';
 import Sidebar from './components/Sidebar';
@@ -25,12 +27,35 @@ function MainApp() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // When page is refreshed via Logo click, reset active query & selected playlist
+
   useEffect(() => {
     setSearchQuery('');
     setSelectedPlaylist(null);
   }, [pageRefreshKey]);
+
+  // Keep selected playlist in sync with storage updates (e.g. renames, track removals, deletions)
+  useEffect(() => {
+    const handlePlaylistsUpdated = () => {
+      if (selectedPlaylist) {
+        const playlists = storageService.getPlaylists();
+        const updated = playlists.find(p => p.id === selectedPlaylist.id);
+        if (updated) {
+          setSelectedPlaylist(updated);
+        } else {
+          // It was deleted
+          setSelectedPlaylist(null);
+          if (activeTab === 'playlist') {
+            setActiveTab('library');
+          }
+        }
+      }
+    };
+    window.addEventListener('playlistsUpdated', handlePlaylistsUpdated);
+    return () => window.removeEventListener('playlistsUpdated', handlePlaylistsUpdated);
+  }, [selectedPlaylist, activeTab, setActiveTab]);
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
@@ -51,17 +76,26 @@ function MainApp() {
 
   return (
     <div className="app-container">
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`sidebar-overlay ${isMobileMenuOpen ? 'is-active' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
       {/* 1. Left Sidebar Navigation */}
       <Sidebar 
         onSelectPlaylist={handleSelectPlaylist} 
         selectedPlaylistId={selectedPlaylist?.id}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* 2. Main Viewport & Scrollable Content */}
+      {/* 2. Main Content Area */}
       <main className="main-viewport">
         <Header 
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
+          searchQuery={searchQuery} 
+          onSearchChange={handleSearchChange} 
+          onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />
 
         {/* View Switcher */}
@@ -118,7 +152,9 @@ function MainApp() {
 export default function App() {
   return (
     <AudioPlayerProvider>
-      <MainApp />
+      <ConfirmationProvider>
+        <MainApp />
+      </ConfirmationProvider>
     </AudioPlayerProvider>
   );
 }

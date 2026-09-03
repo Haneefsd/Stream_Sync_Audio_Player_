@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { apiService } from '../services/api';
-import { formatTime, getSourceBadge } from '../utils/formatters';
+import { formatTime } from '../utils/formatters';
 import {
   X,
   Play,
@@ -11,12 +11,10 @@ import {
   Shuffle,
   Repeat,
   Repeat1,
-  Volume2,
-  VolumeX,
-  Heart,
   Activity,
   FileText,
-  Disc
+  Disc,
+  FolderPlus
 } from 'lucide-react';
 
 export default function FullscreenPlayer({ onClose }) {
@@ -25,21 +23,16 @@ export default function FullscreenPlayer({ onClose }) {
     isPlaying,
     currentTime,
     duration,
-    bufferedTime,
-    volume,
-    isMuted,
     repeatMode,
     shuffle,
-    audioQuality,
     analyserRef,
     togglePlay,
     handleNextTrack,
     handlePrevTrack,
     seekTo,
-    changeVolume,
-    toggleMute,
     toggleRepeatMode,
-    toggleShuffle
+    toggleShuffle,
+    openAddToPlaylist
   } = useAudioPlayer();
 
   const [activeTab, setActiveTab] = useState('visualizer'); // 'visualizer' | 'lyrics'
@@ -181,7 +174,6 @@ export default function FullscreenPlayer({ onClose }) {
   if (!currentTrack) return null;
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const badge = getSourceBadge(currentTrack.source);
 
   const handleSeekClick = (e) => {
     if (!seekSliderRef.current || !duration) return;
@@ -195,17 +187,9 @@ export default function FullscreenPlayer({ onClose }) {
     <div className="fullscreen-player-container">
       {/* Top Bar with Tabs and Close */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span className={`card-source-badge ${badge.className}`} style={{ position: 'static', padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
-            {badge.label}
-          </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Stream Quality: <strong style={{ color: 'var(--accent-emerald)' }}>{audioQuality}</strong>
-          </span>
-        </div>
 
         {/* Tab Switcher (Visualizer vs Lyrics) */}
-        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-full)', padding: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-full)', padding: '4px', gap: '4px' }}>
           <button
             onClick={() => setActiveTab('visualizer')}
             style={{
@@ -409,6 +393,14 @@ export default function FullscreenPlayer({ onClose }) {
 
         {/* Large Media Control Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
+          <button 
+            onClick={() => { if(openAddToPlaylist) openAddToPlaylist(currentTrack); }} 
+            style={{ color: 'var(--text-muted)', transition: 'color 0.15s ease' }}
+            title="Add to Playlist"
+          >
+            <FolderPlus size={22} />
+          </button>
+
           <button onClick={toggleShuffle} style={{ color: shuffle ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
             <Shuffle size={22} />
           </button>

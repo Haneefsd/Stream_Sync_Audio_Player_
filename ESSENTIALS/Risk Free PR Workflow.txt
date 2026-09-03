@@ -1,0 +1,29 @@
+# 1. Start fresh
+git checkout main
+git pull origin main
+
+# 2. New branch
+git checkout -b feature/your-task
+
+# 3. Make changes, commit
+git add .
+git commit -m "Feat: Add XYZ"
+
+# 4. Sync with latest main
+git checkout main
+git pull origin main
+git checkout feature/your-task
+git rebase main
+
+# 5. Push branch
+git push origin feature/your-task
+
+# 6. Create PR → Get review → Squash and merge
+
+# 7. Cleanup
+git checkout main
+git pull origin main
+
+# 8. Branch Delete
+git branch -d feature/your-task-name       # local
+git push origin --delete feature/your-task-name  # remote

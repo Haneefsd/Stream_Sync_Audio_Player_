@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
-import { formatTime, getSourceBadge } from '../utils/formatters';
+import { formatTime } from '../utils/formatters';
 import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2 } from 'lucide-react';
 
 export default function TrackRow({ track, index, trackList = null, onRemove = null }) {
@@ -10,7 +10,6 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
 
   const isCurrent = currentTrack?.id === track.id;
   const isThisPlaying = isCurrent && isPlaying;
-  const badge = getSourceBadge(track.source);
 
   const handleRowClick = () => {
     if (isCurrent) {
@@ -37,7 +36,7 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
   };
 
   return (
-    <div 
+    <div
       className={`track-row ${isCurrent ? 'is-active' : ''}`}
       onClick={handleRowClick}
     >
@@ -56,8 +55,8 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
 
       {/* Thumbnail */}
       <div style={{ width: '42px', height: '42px', borderRadius: '6px', overflow: 'hidden', background: '#1e2433', position: 'relative' }}>
-        <img 
-          src={track.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop&q=60'} 
+        <img
+          src={track.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop&q=60'}
           alt={track.title}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           loading="lazy"
@@ -66,7 +65,7 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
 
       {/* Title & Artist */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', overflow: 'hidden', paddingRight: '1rem' }}>
-        <span 
+        <span
           className="row-title"
           style={{
             fontSize: '0.9rem',
@@ -85,21 +84,14 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
       </div>
 
       {/* Album */}
-      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div className="row-album" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {track.album || 'Single'}
       </div>
-
-      {/* Source Badge */}
-      <div>
-        <span className={`card-source-badge ${badge.className}`} style={{ position: 'static', padding: '0.2rem 0.5rem', fontSize: '0.62rem' }}>
-          {badge.label}
-        </span>
-      </div>
-
+      
       {/* Duration & Quick Actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-        <span>{formatTime(track.duration)}</span>
-        
+        <span className="row-duration-text">{formatTime(track.duration)}</span>
+
         <button
           onClick={handleLikeToggle}
           style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '2px' }}
