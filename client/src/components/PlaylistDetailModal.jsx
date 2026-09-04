@@ -20,7 +20,7 @@ export default function PlaylistDetailModal({ playlist, onClose, onUpdate }) {
 
   const handlePlayAll = () => {
     if (currentPlaylist.tracks?.length > 0) {
-      playTrack(currentPlaylist.tracks[0], currentPlaylist.tracks);
+      playTrack(currentPlaylist.tracks[0], currentPlaylist.tracks, currentPlaylist.id);
       onClose();
     }
   };

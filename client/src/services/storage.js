@@ -127,7 +127,11 @@ export const storageService = {
     if (!alreadyIn) {
       playlist.tracks.push(track);
       localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('playlistsUpdated', {
+          detail: { playlistId, addedTrack: track, type: 'addTrack' }
+        }));
+      }
     }
     return true;
   },
@@ -139,7 +143,11 @@ export const storageService = {
 
     playlist.tracks = playlist.tracks.filter(t => t.id !== trackId);
     localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('playlistsUpdated'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('playlistsUpdated', {
+        detail: { playlistId, removedTrackId: trackId, type: 'removeTrack' }
+      }));
+    }
     return true;
   },
 

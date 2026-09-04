@@ -39,7 +39,7 @@ export default function LibraryView({ onSelectPlaylist }) {
   const handlePlayPlaylist = (e, playlist) => {
     e.stopPropagation();
     if (playlist.tracks && playlist.tracks.length > 0) {
-      playTrack(playlist.tracks[0], playlist.tracks);
+      playTrack(playlist.tracks[0], playlist.tracks, playlist.id);
     }
   };
 

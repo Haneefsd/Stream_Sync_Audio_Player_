@@ -80,6 +80,47 @@ export default function SearchView({ query, onSearchSelect }) {
 
   return (
     <div className="content-scrollable">
+      {/* In-page Search Bar (Shown on mobile or when on Search page) */}
+      <div className="search-inpage-bar" style={{ marginBottom: '1.75rem' }}>
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-full)',
+          padding: '0.75rem 1.25rem',
+          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.4)'
+        }}>
+          <Search size={19} color="var(--text-muted)" style={{ marginRight: '0.75rem', flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Search songs, artists, albums..."
+            value={activeQuery}
+            onChange={(e) => {
+              setActiveQuery(e.target.value);
+              if (onSearchSelect) onSearchSelect(e.target.value);
+            }}
+            style={{
+              width: '100%',
+              fontSize: '0.96rem',
+              color: 'var(--text-primary)'
+            }}
+          />
+          {activeQuery && (
+            <button
+              onClick={() => {
+                setActiveQuery('');
+                if (onSearchSelect) onSearchSelect('');
+              }}
+              style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '2px' }}
+            >
+              <X size={17} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Search Header Info */}
       <div style={{
         display: 'flex',

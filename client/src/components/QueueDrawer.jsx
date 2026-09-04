@@ -13,7 +13,7 @@ export default function QueueDrawer({ onClose }) {
     clearQueue 
   } = useAudioPlayer();
 
-  const upNextList = queue.slice(currentIndex + 1);
+  const upNextList = currentIndex >= 0 ? queue.slice(currentIndex + 1) : queue;
 
   return (
     <div 
@@ -47,7 +47,12 @@ export default function QueueDrawer({ onClose }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <ListMusic size={20} color="var(--accent-emerald)" />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Play Queue</h2>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Play Queue ({upNextList.length})</h2>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {upNextList.length} {upNextList.length === 1 ? 'song' : 'songs'} to be played
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -119,7 +124,7 @@ export default function QueueDrawer({ onClose }) {
         {/* Up Next List */}
         <div>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Up Next ({upNextList.length})
+            Up Next ({upNextList.length} to be played)
           </span>
 
           {upNextList.length > 0 ? (

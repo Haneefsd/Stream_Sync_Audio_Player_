@@ -186,7 +186,7 @@ export default function FullscreenPlayer({ onClose }) {
   return (
     <div className="fullscreen-player-container">
       {/* Top Bar with Tabs and Close */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', zIndex: 10 }}>
+      <div className="fullscreen-top-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', zIndex: 10 }}>
 
         {/* Tab Switcher (Visualizer vs Lyrics) */}
         <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-full)', padding: '4px', gap: '4px' }}>
@@ -227,43 +227,65 @@ export default function FullscreenPlayer({ onClose }) {
           </button>
         </div>
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border-subtle)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-primary)'
-          }}
-          title="Minimize"
-        >
-          <X size={22} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            className="fullscreen-top-add-playlist"
+            onClick={() => { if (openAddToPlaylist) openAddToPlaylist(currentTrack); }}
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-subtle)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+              transition: 'all 0.15s ease'
+            }}
+            title="Add to Playlist"
+          >
+            <FolderPlus size={19} />
+          </button>
+
+          <button
+            onClick={onClose}
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-primary)'
+            }}
+            title="Minimize"
+          >
+            <X size={22} />
+          </button>
+        </div>
       </div>
 
       {/* Main Center Stage */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 0, padding: '0.5rem 1.5rem' }}>
+      <div className="fullscreen-center-stage" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 0, padding: '0.5rem 1.5rem' }}>
         {/* VISUALIZER TAB */}
         {activeTab === 'visualizer' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: '1.25rem' }}>
             {/* Spinning Vinyl Cover Art - Perfect Complete Circle */}
-            <div style={{
-              position: 'relative',
-              width: 'min(38vh, 320px)',
-              height: 'min(38vh, 320px)',
-              aspectRatio: '1 / 1',
-              flexShrink: 0,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 35px var(--accent-emerald-glow)',
-              border: '5px solid #081d53ff',
-              animation: isPlaying ? 'spin 18s linear infinite' : 'none'
-            }}>
+            <div
+              className="fullscreen-vinyl-disc"
+              style={{
+                position: 'relative',
+                aspectRatio: '1 / 1',
+                flexShrink: 0,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 35px var(--accent-emerald-glow)',
+                border: '5px solid #081d53ff',
+                animation: isPlaying ? 'spin 18s linear infinite' : 'none'
+              }}
+            >
               <style>{`
                 @keyframes spin {
                   from { transform: rotate(0deg); }
@@ -294,7 +316,7 @@ export default function FullscreenPlayer({ onClose }) {
             </div>
 
             {/* Audio Visualizer Spectrum Canvas */}
-            <div style={{ width: '100%', maxWidth: '720px', height: '90px', position: 'relative', flexShrink: 0 }}>
+            <div className="fullscreen-spectrum-canvas-container" style={{ width: '100%', position: 'relative', flexShrink: 0 }}>
               <canvas
                 ref={canvasRef}
                 width={720}
@@ -363,11 +385,11 @@ export default function FullscreenPlayer({ onClose }) {
       </div>
 
       {/* Bottom Track Controls Area */}
-      <div style={{ width: '100%', maxWidth: '820px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', zIndex: 10 }}>
+      <div className="fullscreen-bottom-controls-area" style={{ width: '100%', maxWidth: '820px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.85rem', zIndex: 10 }}>
         {/* Track Title and Artist */}
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.25rem' }}>{currentTrack.title}</h2>
-          <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>{currentTrack.artist}</p>
+        <div className="fullscreen-track-info" style={{ textAlign: 'center' }}>
+          <h2 className="fullscreen-track-title" style={{ fontWeight: 800, marginBottom: '0.25rem' }}>{currentTrack.title}</h2>
+          <p className="fullscreen-track-artist" style={{ color: 'var(--text-secondary)' }}>{currentTrack.artist}</p>
         </div>
 
         {/* Seek Bar */}
@@ -391,8 +413,8 @@ export default function FullscreenPlayer({ onClose }) {
           </span>
         </div>
 
-        {/* Large Media Control Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
+        {/* Large Media Control Buttons (Desktop only, on mobile the docked PlayerBar handles playback) */}
+        <div className="fullscreen-desktop-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
           <button 
             onClick={() => { if(openAddToPlaylist) openAddToPlaylist(currentTrack); }} 
             style={{ color: 'var(--text-muted)', transition: 'color 0.15s ease' }}

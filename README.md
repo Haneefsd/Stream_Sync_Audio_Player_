@@ -10,19 +10,20 @@
 1. [Key Highlights & Features](#-key-highlights--features)
 2. [System Architecture & Data Flow](#-system-architecture--data-flow)
 3. [Deep-Dive Feature Breakdown](#-deep-dive-feature-breakdown)
-   - [Seamless Audio Playback Engine](#1-seamless-audio-playback-engine)
+   - [Seamless Audio Playback Engine & Queue Management](#1-seamless-audio-playback-engine--queue-management)
    - [Dedicated Full-Page Playlist Management](#2-dedicated-full-page-playlist-management)
    - [Dedicated Liked Songs Hub](#3-dedicated-liked-songs-hub)
    - [Advanced Search & History Engine](#4-advanced-search--history-engine)
    - [Smart Recommendation & Dynamic Trending Mix](#5-smart-recommendation--dynamic-trending-mix)
    - [Fullscreen Visualizer & Synchronized Lyrics](#6-fullscreen-visualizer--synchronized-lyrics)
-   - [Decent Vibrant Theme & Glassmorphism](#7-decent-vibrant-theme--glassmorphism)
+   - [Mobile-First Responsive Dock & Auto-Minimizing Navigation](#7-mobile-first-responsive-dock--auto-minimizing-navigation)
+   - [Curated Vibrant Theme & Glassmorphism](#8-curated-vibrant-theme--glassmorphism)
 4. [Data Models & Schema Specifications](#-data-models--schema-specifications)
 5. [REST API Documentation](#-rest-api-documentation)
 6. [Installation & Setup Guide](#-installation--setup-guide)
 7. [Production Build & Deployment](#-production-build--deployment)
 8. [Comprehensive Directory Tree](#-comprehensive-directory-tree)
-9. [Keyboard Shortcuts & Media Controls](#-keyboard-shortcuts--media-controls)
+9. [Keyboard Shortcuts & Touch Gestures](#-keyboard-shortcuts--touch-gestures)
 10. [Troubleshooting & FAQ](#-troubleshooting--faq)
 11. [Privacy & License](#-privacy--license)
 
@@ -32,14 +33,18 @@
 
 * 🚀 **Zero Database & 100% Stateless:** No MongoDB, PostgreSQL, or Redis required. Playlists, favorites, listening history, search history, and player settings are stored securely in browser `localStorage`.
 * ⚡ **Instant Client-Side Streaming:** Powered by an embedded headless player engine that bypasses proxy bottlenecks, eliminates CORS errors, and supports hardware-accelerated playback.
-* 🔄 **Non-Stop Logo Page Refresh:** Clicking the **StreamSync logo** in the navigation resets and refreshes the application view to the home feed while **audio playback continues uninterrupted in the background**.
+* 📱 **Mobile-First App Experience & Docked Navigation:** Features a fixed Spotify-style bottom navigation bar (`MobileBottomNav.jsx`) with 5 dedicated tabs (`Home`, `Search`, `Your Library`, `Liked Songs`, `Create`) paired with a rock-solid, non-jumping mini player bar docked directly above it.
+* 🔽 **Auto-Minimizing Visualizer on Bottom Actions:** When the visualizer or lyrics view is open in mobile mode, tapping any bottom navigation button or tapping the mini-player bar automatically minimizes the visualizer and switches to the destination view.
+* 🔢 **Intelligent Queue Display ("Songs to be Played"):** The queue button badge and queue drawer header dynamically calculate and display only the upcoming songs remaining to be played (`queue.length - 1 - currentIndex`), rather than historical played tracks.
+* ⚡ **Real-Time Playlist-to-Queue Sync:** Adding tracks to the playlist currently playing immediately updates the active playback queue on-the-fly without needing to reload or restart playback.
+* ➕ **In-Visualizer "Add to Playlist" Option:** Easily add the currently playing song to any custom playlist directly from within the visualizer using the dedicated `FolderPlus` symbol. The library selection modal opens seamlessly over the visualizer.
+* 🌊 **Adjusted 360° Circular Vinyl Visualizer & Frequency Canvas:** Scaled perfectly for mobile screens (`min(28vh, 215px)`) with real-time Web Audio API spectrum bars, song metadata, and seek bar positioned cleanly above the docked bottom bars with zero clipping.
+* 🔄 **Non-Stop Logo Page Refresh:** Clicking the **StreamSync logo** in the header or sidebar resets and refreshes the application view to the home feed while **audio playback continues uninterrupted in the background**.
 * 📑 **Dedicated Full-Page Playlist Views:** Playlists open as comprehensive standalone pages (`PlaylistView.jsx`) with custom cover uploads, 1st-song artwork fallback, and in-page song search.
 * 💖 **Dedicated "Liked Songs" Panel:** An isolated, private favorites panel with one-click **Play All**, **Shuffle**, and real-time title/artist search filtering.
 * 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
 * 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
-* 🌊 **360° Complete Circle Vinyl Visualizer:** Responsive spinning vinyl artwork locked to an exact `1:1` aspect ratio accompanied by a real-time Web Audio API frequency spectrum canvas.
-* 📱 **True Multi-Device Responsiveness:** Fluid CSS Grid structures, mobile drawer navigation, and intelligent component scaling for a flawless experience across desktop, tablet, and mobile displays.
-* 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, modification) with contextual warnings.
+* 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, playlist creation, track removal) with contextual warnings.
 * 🎨 **Curated Vibrant Glassmorphic UI:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with a strict **Zero Pink Guarantee**.
 
 ---
@@ -54,8 +59,8 @@
 │  │    UI Components      │   │  AudioPlayerProvider   │   │   localStorage Service  │  │
 │  │  (Home, Search,       │   │  (Headless Streaming,  │   │  (Playlists, Favorites, │  │
 │  │   Library, Playlists, │◄─►│   Auto-next track,     │◄─►│   History, Search Cache,│  │
-│  │   Liked, Fullscreen)  │   │   MediaSession API,    │   │   Playback Settings)    │  │
-│  │                       │   │   Non-stop refresh)    │   │                         │  │
+│  │   Liked, Fullscreen,  │   │   MediaSession API,    │   │   Playback Settings,    │  │
+│  │   MobileBottomNav)    │   │   Immediate Queue Sync)│   │   Real-time events)     │  │
 │  └───────────┬───────────┘   └───────────┬────────────┘   └─────────────────────────┘  │
 └──────────────┼───────────────────────────┼─────────────────────────────────────────────┘
                │                           │
@@ -78,9 +83,13 @@
 
 ## 🔍 Deep-Dive Feature Breakdown
 
-### 1. Seamless Audio Playback Engine
+### 1. Seamless Audio Playback Engine & Queue Management
 * **Headless Streaming Integration:** Integrates the YouTube IFrame API headlessly via `AudioPlayerProvider.jsx`. This guarantees zero media-server load on your backend and full access to CDN-cached audio streams.
 * **Continuous Auto-Play (Sequential & Shuffle):** Listens to track completion events (`YT.PlayerState.ENDED`) and seamlessly triggers `handleNextTrack()`, advancing through the queue or playlist automatically.
+* **Intelligent "Songs to be Played" Queue Counter:**
+  * The queue icon in the header displays a live counter badge: `songsToBePlayed = currentIndex >= 0 ? Math.max(0, queue.length - 1 - currentIndex) : queue.length`.
+  * The slide-out `QueueDrawer.jsx` clearly lists `Up Next ({upNextList.length} to be played)` and titles the drawer with the exact remaining track count.
+* **Instant Playlist-to-Queue Synchronization:** When adding or removing tracks in the playlist currently being streamed, `storage.js` broadcasts a custom `playlist_updated` event that `AudioPlayerProvider` captures, updating the active queue instantaneously without disrupting audio.
 * **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
 * **MediaSession API Support:** Hooks directly into your operating system's native media notification center. Track artwork, title, artist, seek bars, and play/pause controls function from locked screens, notifications, and Bluetooth headsets.
 * **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
@@ -93,19 +102,20 @@
   * **Automatic 1st Song Fallback:** If no custom image is provided, `storageService.getPlaylistCover()` automatically uses the album art of the first song in the playlist.
 * **In-Page Song Search & Add:** Search for songs, artists, or acoustic covers directly within the playlist page. Click `+ Add` to append tracks to the playlist instantly without leaving the view.
 * **Full Tracklist Operations:** Play individual tracks, remove specific songs, trigger **Play All**, or start **Shuffle Play**.
-* **Real-Time Sidebar Sync:** Creating, modifying, or deleting a playlist immediately updates the application state and refreshes the sidebar navigation without a page reload.
 * **Guarded Operations:** Context-aware confirmation modals intercept playlist deletion and modification attempts to prevent accidental data loss.
 
 ### 3. Dedicated Liked Songs Hub
-* **Independent Panel (`LikedSongsView.jsx`):** Accessible from the sidebar, this view is strictly reserved for user-favorited tracks.
+* **Independent Panel (`LikedSongsView.jsx`):** Accessible from both desktop sidebar and mobile bottom navigation, this view is strictly reserved for user-favorited tracks.
 * **Vibrant Indigo Branding:** Distinctive styling featuring an Electric Indigo and Royal Violet hero gradient banner with glowing heart iconography.
 * **Real-Time Search Filtering:** Filter your liked songs collection instantly by title or artist.
 * **One-Click Playback:** Batch-play all liked songs sequentially or in randomized shuffle mode.
 
 ### 4. Advanced Search & History Engine
 * **Debounced Fast Search:** Triggers automatic queries as you type with a 300ms debounce interval, minimizing unnecessary network overhead.
+* **Dual Responsive Input Architecture:**
+  * Desktop uses the sticky global header search input.
+  * Mobile devices dynamically display the StreamSync brand in the header, placing an inline search input inside `SearchView.jsx` (`.search-inpage-bar`) for optimal thumb reach.
 * **Persistent Search Cache:** Cached search queries and full track result arrays are saved to `streamsync_last_search`. When switching tabs and returning to Search, your results remain preserved.
-* **Clean Keyword Header:** The search view heading cleanly displays just the searched term (e.g. `Aditya Rikhari` or `Arijit Singh`) rather than verbose text.
 * **Individual Search Removal (`X` Button):** Each item in the "Previous Searches" list features a dedicated cross button to delete that specific search term from history.
 * **Intelligent Fragment Consolidation:** Automatically replaces partial typing keystrokes (e.g. `y`, `y ra`, `y rath`) with the completed query (`y ratha`) to prevent history clutter.
 
@@ -117,12 +127,26 @@
 * **Clean Section Heading:** The shelf heading is kept clean and generic (**Trending Hits**) without exposing private search keywords in the title.
 
 ### 6. Fullscreen Visualizer & Synchronized Lyrics
-* **360° Complete Circle Vinyl Artwork:** Uses a strict `aspect-ratio: 1 / 1`, `flexShrink: 0`, and viewport-relative scaling (`min(38vh, 320px)`) to guarantee the spinning album art disc remains a complete, un-squashed circle on all screen dimensions.
+* **Adjusted Mobile Layout:** Engineered to fit seamlessly above docked bottom controls without overflow or clipping:
+  * Dynamic bottom padding: `calc(var(--mobile-nav-height) + var(--player-height-mobile) + 0.85rem)`.
+  * Mobile vinyl diameter scaled to `min(28vh, 215px)` with centered glowing concentric rings.
+  * Audio spectrum canvas (`height: 42px`, `max-width: 320px`) sits directly below the vinyl record.
+  * Song title, artist, and seek bar sit cleanly above the mini player.
+* **In-Visualizer "Add to Playlist":**
+  * **Desktop Full Screen Mode:** The `FolderPlus` action button is cleanly positioned in the bottom playback control row beside Shuffle and Play buttons, keeping the top right clean with just the close (`X`) button.
+  * **Mobile / Responsive Mode (`<= 768px`):** The `FolderPlus` button dynamically appears in the top right beside the close (`X`) button (since the bottom desktop controls are hidden on mobile), allowing one-tap library playlist selection over the visualizer without closing it.
 * **Web Audio API Spectrum Analyser:** Extracts real-time frequency data into 64 frequency bins via an `AnalyserNode`, rendered on an HTML5 `<canvas>` with an emerald-to-cyan gradient waveform.
 * **Line-by-Line Synchronized Lyrics:** Fetches timestamped lyrics from LRCLIB. Automatically scrolls the active line into view with smooth transitions and allows clicking any line to seek directly to that timestamp.
-* **In-Visualizer Actions:** Directly add the currently playing track to any playlist or your favorites without leaving the immersive fullscreen visualizer mode.
 
-### 7. Decent Vibrant Theme & Glassmorphism
+### 7. Mobile-First Responsive Dock & Auto-Minimizing Navigation
+* **Dedicated Bottom Navigation Bar (`MobileBottomNav.jsx`):**
+  * Displayed on viewports `<= 768px` at `bottom: 0`.
+  * Provides 5 core tabs: **Home**, **Search**, **Your Library**, **Liked Songs**, and **Create** (`+`).
+* **Auto-Minimizing Visualizer:** Tapping any button on the bottom navigation bar or tapping the mini-player track info immediately minimizes the visualizer/lyrics screen, bringing the user right to the requested view.
+* **Rock-Solid Mini Player:** The mobile player bar (`PlayerBar.jsx`) is fixed directly above the bottom nav at `bottom: var(--mobile-nav-height)` (`60px`). It remains stable and stationary during scrolling, browsing, and tab switching.
+* **Context-Guarded Playlist Creation:** Tapping the **Create** tab on the bottom bar triggers a confirmation modal to name and create a new playlist with one tap.
+
+### 8. Curated Vibrant Theme & Glassmorphism
 * **Modern Palette:** Built using curated colors tailored for high visual appeal:
   * **Electric Indigo:** `#6366f1` / `#4f46e5` (Liked Songs hero, active state highlights)
   * **Emerald Green:** `#10b981` (Primary accents, play buttons, sliders)
@@ -346,32 +370,36 @@ Stream_Sync_Audio_Player_/
 ├── client/
 │   ├── public/                  # Static assets & icons
 │   ├── src/
-│   │   ├── components/          # 14 Modular UI components
+│   │   ├── components/          # 15 Modular UI components
 │   │   │   ├── AddToPlaylistModal.jsx   # Modal for adding tracks to custom playlists
-│   │   │   ├── FullscreenPlayer.jsx     # 360° circle visualizer & synced lyrics mode
-│   │   │   ├── Header.jsx               # Sticky search bar & queue button
+│   │   │   ├── ConfirmationModal.jsx    # Context-aware safety dialog for destructive operations
+│   │   │   ├── FullscreenPlayer.jsx     # 360° circle visualizer & synced lyrics mode with FolderPlus action
+│   │   │   ├── Header.jsx               # Sticky search bar (desktop) / brand logo (mobile) & queue badge
 │   │   │   ├── HomeView.jsx             # Hero banner, genre chips & trending hits
 │   │   │   ├── LibraryView.jsx          # Playlists & Liked Songs management hub
 │   │   │   ├── LikedSongsView.jsx       # Dedicated Liked Songs panel with batch actions
-│   │   │   ├── PlayerBar.jsx            # Bottom sticky audio controls & seekbar
+│   │   │   ├── MobileBottomNav.jsx      # Mobile docked navigation (Home, Search, Library, Liked, Create)
+│   │   │   ├── PlayerBar.jsx            # Fixed audio controls, seekbar & responsive mobile controller
 │   │   │   ├── PlaylistDetailModal.jsx  # Quick playlist modal viewer
 │   │   │   ├── PlaylistView.jsx         # Standalone full-page playlist with in-page search
-│   │   │   ├── QueueDrawer.jsx          # Slide-out playback queue drawer
-│   │   │   ├── SearchView.jsx           # Persistent search results & history manager
-│   │   │   ├── Sidebar.jsx              # Left sidebar with interactive refresh logo
+│   │   │   ├── QueueDrawer.jsx          # Slide-out playback queue with "songs to be played" count
+│   │   │   ├── SearchView.jsx           # Persistent search results, history manager & mobile in-page search
+│   │   │   ├── Sidebar.jsx              # Left desktop sidebar with interactive refresh logo
 │   │   │   ├── TrackCard.jsx            # Grid track card with hover actions & dropdowns
 │   │   │   └── TrackRow.jsx             # Table track row with animated equalizer
 │   │   ├── context/
 │   │   │   ├── AudioPlayerContext.jsx   # Context hook definition
-│   │   │   └── AudioPlayerProvider.jsx  # Playback engine, non-stop refresh & queue
+│   │   │   ├── AudioPlayerProvider.jsx  # Playback engine, non-stop refresh & instant queue sync
+│   │   │   ├── ConfirmationContext.jsx  # Confirmation modal hook definition
+│   │   │   └── ConfirmationProvider.jsx # Global confirmation modal provider
 │   │   ├── services/
 │   │   │   ├── api.js                   # Client REST API consumer
-│   │   │   └── storage.js               # Zero-DB client localStorage service
+│   │   │   └── storage.js               # Zero-DB client localStorage service & real-time events
 │   │   ├── utils/
 │   │   │   └── formatters.js            # Time & badge formatters
 │   │   ├── App.jsx                      # Main app layout container & view router
 │   │   ├── main.jsx                     # Vite React entry point
-│   │   └── index.css                    # Design tokens & glassmorphic styling
+│   │   └── index.css                    # Design tokens, mobile dock & glassmorphic styling
 │   ├── index.html                       # HTML5 entry with Outfit & Plus Jakarta fonts
 │   ├── package.json
 │   └── vite.config.js
@@ -395,16 +423,19 @@ Stream_Sync_Audio_Player_/
 
 ---
 
-## ⌨️ Keyboard Shortcuts & Media Controls
+## ⌨️ Keyboard Shortcuts & Touch Gestures
 
-| Key / Action | Function |
-| :--- | :--- |
-| **Spacebar** | Toggle Play / Pause |
-| **Media Play / Pause** | Hardware Play / Pause on keyboard or headset |
-| **Media Track Next** | Skip to next track in queue or playlist |
-| **Media Track Previous** | Skip to previous track |
-| **Click Logo** | Soft-refresh application to Home without interrupting music |
-| **Click Lyrics Line** | Seek playback directly to that lyric timestamp |
+| Key / Action | Context | Function |
+| :--- | :--- | :--- |
+| **Spacebar** | Global | Toggle Play / Pause |
+| **Media Play / Pause** | Hardware | Hardware Play / Pause on keyboard or Bluetooth headset |
+| **Media Track Next** | Hardware | Skip to next track in queue or playlist |
+| **Media Track Previous**| Hardware | Skip to previous track |
+| **Click Logo** | Header / Sidebar | Soft-refresh application to Home without interrupting music |
+| **Click Lyrics Line** | Fullscreen Player | Seek playback directly to that lyric timestamp |
+| **Click Cover Art / Title** | Player Bar | Expand or minimize Fullscreen Visualizer & Lyrics |
+| **Tap Bottom Nav Tab** | Mobile | Switch view and automatically minimize visualizer if open |
+| **Tap FolderPlus Icon**| Visualizer (Bottom on Desktop, Top Bar on Mobile)| Add currently playing track to any playlist instantly |
 
 ---
 
@@ -417,8 +448,11 @@ Stream_Sync_Audio_Player_/
 #### 2. YouTube API Quota Exceeded?
 - The backend features an automatic, seamless **fallback scraper engine**. If your Google Cloud API key quota is exhausted, StreamSync automatically routes searches through the scraper with zero downtime.
 
-#### 3. Port 5000 or 3000 already in use?
-- If port `5000` is occupied, change `PORT=5001` in `server/.env` and update the proxy port in `client/vite.config.js`.
+#### 3. How does the Queue count work?
+- The queue badge displays only the upcoming songs that are scheduled to be played next (`queue.length - 1 - currentIndex`). Tracks that have already been played are excluded from the count.
+
+#### 4. How does the mobile bottom navigation interact with the visualizer?
+- When the visualizer is open, tapping any of the 5 bottom navigation tabs (**Home**, **Search**, **Your Library**, **Liked Songs**, **Create**) automatically minimizes the visualizer and takes you immediately to that screen.
 
 ---
 

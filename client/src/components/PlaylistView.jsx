@@ -55,7 +55,7 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
 
   const handlePlayAll = () => {
     if (currentPlaylist.tracks?.length > 0) {
-      playTrack(currentPlaylist.tracks[0], currentPlaylist.tracks);
+      playTrack(currentPlaylist.tracks[0], currentPlaylist.tracks, currentPlaylist.id);
     }
   };
 
@@ -63,7 +63,7 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
     if (currentPlaylist.tracks?.length > 0) {
       toggleShuffle(true);
       const randomTrack = currentPlaylist.tracks[Math.floor(Math.random() * currentPlaylist.tracks.length)];
-      playTrack(randomTrack, currentPlaylist.tracks);
+      playTrack(randomTrack, currentPlaylist.tracks, currentPlaylist.id);
     }
   };
 
@@ -558,6 +558,7 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
                 track={track}
                 index={i}
                 trackList={currentPlaylist.tracks}
+                playlistId={currentPlaylist.id}
                 onRemove={handleRemoveTrack}
               />
             ))}

@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
-import { Search, X, ListMusic, Menu } from 'lucide-react';
+import { Search, X, ListMusic, Radio } from 'lucide-react';
 
-export default function Header({ searchQuery, onSearchChange, onMobileMenuToggle }) {
+export default function Header({ searchQuery, onSearchChange }) {
   const {
     isQueueOpen,
     setIsQueueOpen,
     queue,
-    setActiveTab
+    currentIndex,
+    setActiveTab,
+    refreshPage
   } = useAudioPlayer();
 
   const [localQuery, setLocalQuery] = useState(searchQuery || '');
+  const [isLogoSpinning, setIsLogoSpinning] = useState(false);
 
   useEffect(() => {
     setLocalQuery(searchQuery || '');
   }, [searchQuery]);
+
+  const handleLogoClick = () => {
+    setIsLogoSpinning(true);
+    setTimeout(() => setIsLogoSpinning(false), 650);
+    refreshPage();
+  };
 
   const handleInputChange = (e) => {
     const val = e.target.value;
@@ -40,7 +49,7 @@ export default function Header({ searchQuery, onSearchChange, onMobileMenuToggle
   return (
     <header className="header-container" style={{
       height: 'var(--header-height)',
-      padding: '0 1rem', // Adjust for mobile, will be overriden by content-scrollable but header needs its own
+      padding: '0 1.25rem',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -53,15 +62,53 @@ export default function Header({ searchQuery, onSearchChange, onMobileMenuToggle
       top: 0,
       zIndex: 20
     }}>
-      {/* Search Input Bar & Mobile Menu Toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '680px' }}>
-        <button 
-          className="mobile-menu-toggle"
-          onClick={onMobileMenuToggle}
-          title="Open Menu"
-        >
-          <Menu size={24} />
-        </button>
+      {/* Mobile Brand Logo & Name (Visible only on mobile in place of the search bar) */}
+      <div 
+        className="header-brand-mobile"
+        onClick={handleLogoClick}
+        title="Refresh home (playback continues)"
+        style={{
+          alignItems: 'center',
+          gap: '0.7rem',
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+      >
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '9px',
+          background: 'linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-cyan) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 15px var(--accent-emerald-glow)',
+          transform: isLogoSpinning ? 'rotate(360deg)' : 'none',
+          transition: isLogoSpinning ? 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
+          flexShrink: 0
+        }}>
+          <Radio size={20} color="#000" strokeWidth={2.5} />
+        </div>
+        <div>
+          <h2 style={{
+            fontSize: '1.2rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            background: 'linear-gradient(to right, #fff, #94a3b8)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            lineHeight: 1.15
+          }}>
+            StreamSync
+          </h2>
+          <span style={{ fontSize: '0.62rem', color: 'var(--accent-emerald)', fontWeight: 700, letterSpacing: '0.04em' }}>
+            STATELESS AUDIO
+          </span>
+        </div>
+      </div>
+
+      {/* Desktop Search Input Bar (Visible on desktop/tablet, hidden on mobile) */}
+      <div className="header-search-bar" style={{ alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '680px' }}>
         <div style={{
           position: 'relative',
           flex: 1,
@@ -117,26 +164,30 @@ export default function Header({ searchQuery, onSearchChange, onMobileMenuToggle
           title="Playback Queue"
         >
           <ListMusic size={19} />
-          {queue.length > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '-3px',
-              right: '-3px',
-              width: '18px',
-              height: '18px',
-              borderRadius: '50%',
-              background: 'var(--accent-cyan)',
-              color: '#000',
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid var(--bg-main)'
-            }}>
-              {queue.length}
-            </span>
-          )}
+          {(() => {
+            const songsToBePlayed = currentIndex >= 0 ? Math.max(0, queue.length - 1 - currentIndex) : queue.length;
+            if (songsToBePlayed <= 0) return null;
+            return (
+              <span style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: 'var(--accent-cyan)',
+                color: '#000',
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px solid var(--bg-main)'
+              }}>
+                {songsToBePlayed}
+              </span>
+            );
+          })()}
         </button>
       </div>
     </header>

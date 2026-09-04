@@ -38,6 +38,7 @@ export default function PlayerBar() {
     toggleMute,
     toggleRepeatMode,
     toggleShuffle,
+    isFullscreenPlayerOpen,
     setIsFullscreenPlayerOpen,
     setIsQueueOpen
   } = useAudioPlayer();
@@ -86,9 +87,9 @@ export default function PlayerBar() {
     <div className="player-bar">
       {/* 1. Left Track Metadata Section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', overflow: 'hidden' }}>
-        {/* Clickable Cover Art to Open Fullscreen */}
+        {/* Clickable Cover Art to Open/Minimize Fullscreen */}
         <div
-          onClick={() => setIsFullscreenPlayerOpen(true)}
+          onClick={() => setIsFullscreenPlayerOpen(prev => !prev)}
           style={{
             position: 'relative',
             width: '54px',
@@ -99,7 +100,7 @@ export default function PlayerBar() {
             cursor: 'pointer',
             boxShadow: 'var(--shadow-sm)'
           }}
-          title="Click for Fullscreen Visualizer & Lyrics"
+          title={isFullscreenPlayerOpen ? "Minimize Visualizer" : "Click for Fullscreen Visualizer & Lyrics"}
         >
           <img
             src={currentTrack.thumbnailUrl}
@@ -127,7 +128,7 @@ export default function PlayerBar() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span
-              onClick={() => setIsFullscreenPlayerOpen(true)}
+              onClick={() => setIsFullscreenPlayerOpen(prev => !prev)}
               style={{
                 fontSize: '0.92rem',
                 fontWeight: 700,
@@ -136,6 +137,7 @@ export default function PlayerBar() {
                 textOverflow: 'ellipsis',
                 cursor: 'pointer'
               }}
+              title={isFullscreenPlayerOpen ? "Minimize Visualizer" : "Expand Visualizer"}
             >
               {currentTrack.title}
             </span>

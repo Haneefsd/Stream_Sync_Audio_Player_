@@ -4,7 +4,7 @@ import { storageService } from '../services/storage';
 import { formatTime } from '../utils/formatters';
 import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2 } from 'lucide-react';
 
-export default function TrackRow({ track, index, trackList = null, onRemove = null }) {
+export default function TrackRow({ track, index, trackList = null, playlistId = null, onRemove = null }) {
   const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue, openAddToPlaylist } = useAudioPlayer();
   const [isLiked, setIsLiked] = useState(storageService.isFavorite(track.id));
 
@@ -15,7 +15,7 @@ export default function TrackRow({ track, index, trackList = null, onRemove = nu
     if (isCurrent) {
       togglePlay();
     } else {
-      playTrack(track, trackList);
+      playTrack(track, trackList, playlistId);
     }
   };
 

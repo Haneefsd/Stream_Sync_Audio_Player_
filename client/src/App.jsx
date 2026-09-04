@@ -11,6 +11,7 @@ import LibraryView from './components/LibraryView';
 import LikedSongsView from './components/LikedSongsView';
 import PlaylistView from './components/PlaylistView';
 import PlayerBar from './components/PlayerBar';
+import MobileBottomNav from './components/MobileBottomNav';
 import QueueDrawer from './components/QueueDrawer';
 import FullscreenPlayer from './components/FullscreenPlayer';
 
@@ -136,6 +137,9 @@ function MainApp() {
 
       {/* 3. Bottom Sticky Player Bar */}
       <PlayerBar />
+
+      {/* 4. Mobile Bottom Navigation Bar (Options under PlayerBar) */}
+      <MobileBottomNav onSelectPlaylist={handleSelectPlaylist} />
 
       {/* 4. Drawers & Modals */}
       {isQueueOpen && (

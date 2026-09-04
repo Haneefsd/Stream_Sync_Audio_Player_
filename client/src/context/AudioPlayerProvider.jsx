@@ -21,6 +21,9 @@ export const AudioPlayerProvider = ({ children }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off'); // 'off' | 'all' | 'one'
   const [shuffle, setShuffle] = useState(initialSettings.shuffle || false);
+  const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
+  const currentPlaylistIdRef = useRef(null);
+  useEffect(() => { currentPlaylistIdRef.current = currentPlaylistId; }, [currentPlaylistId]);
 
   // Modals & Tabs
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
@@ -50,6 +53,42 @@ export const AudioPlayerProvider = ({ children }) => {
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
   useEffect(() => { shuffleRef.current = shuffle; }, [shuffle]);
+
+  // Immediately update queue when songs are added to the currently playing playlist
+  useEffect(() => {
+    const handlePlaylistsUpdated = (e) => {
+      const activePlId = currentPlaylistIdRef.current;
+      if (!activePlId) return;
+
+      const detail = e?.detail;
+      if (detail?.playlistId && detail.playlistId !== activePlId) return;
+
+      const playlists = storageService.getPlaylists();
+      const activePlaylist = playlists.find(p => p.id === activePlId);
+      if (!activePlaylist) return;
+
+      if (detail?.addedTrack) {
+        setQueue(prevQueue => {
+          if (prevQueue.some(t => t.id === detail.addedTrack.id)) return prevQueue;
+          return [...prevQueue, detail.addedTrack];
+        });
+      } else if (detail?.removedTrackId) {
+        setQueue(prevQueue => prevQueue.filter(t => t.id !== detail.removedTrackId));
+      } else {
+        setQueue(prevQueue => {
+          const existingIds = new Set(prevQueue.map(t => t.id));
+          const newTracks = activePlaylist.tracks.filter(t => !existingIds.has(t.id));
+          if (newTracks.length > 0) {
+            return [...prevQueue, ...newTracks];
+          }
+          return prevQueue;
+        });
+      }
+    };
+
+    window.addEventListener('playlistsUpdated', handlePlaylistsUpdated);
+    return () => window.removeEventListener('playlistsUpdated', handlePlaylistsUpdated);
+  }, []);
 
   // Initialize YouTube IFrame API once
   useEffect(() => {
@@ -188,8 +227,22 @@ export const AudioPlayerProvider = ({ children }) => {
   }, [currentTrack]);
 
   // Play a track
-  const playTrack = useCallback((track, newQueue = null) => {
+  const playTrack = useCallback((track, newQueue = null, playlistId = undefined) => {
     if (!track) return;
+
+    // Track active playlist context
+    if (playlistId !== undefined) {
+      setCurrentPlaylistId(playlistId);
+    } else if (newQueue && Array.isArray(newQueue) && newQueue.length > 0) {
+      const allPlaylists = storageService.getPlaylists();
+      const matched = allPlaylists.find(p => 
+        p.tracks && p.tracks.length > 0 &&
+        p.tracks.length === newQueue.length &&
+        p.tracks[0]?.id === newQueue[0]?.id &&
+        p.tracks[p.tracks.length - 1]?.id === newQueue[newQueue.length - 1]?.id
+      );
+      setCurrentPlaylistId(matched ? matched.id : null);
+    }
 
     const videoId = track.originalId || track.id?.replace('youtube_', '');
     if (!videoId) return;
@@ -433,7 +486,9 @@ export const AudioPlayerProvider = ({ children }) => {
         setIsFullscreenPlayerOpen,
         setIsQueueOpen,
         setActiveTab,
-        openAddToPlaylist
+        openAddToPlaylist,
+        currentPlaylistId,
+        setCurrentPlaylistId
       }}
     >
       {children}
