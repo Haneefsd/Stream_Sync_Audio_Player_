@@ -49,21 +49,25 @@ export default function Header({ searchQuery, onSearchChange }) {
   return (
     <header className="header-container" style={{
       height: 'var(--header-height)',
+      minHeight: 'var(--header-height)',
+      maxHeight: 'var(--header-height)',
+      flexShrink: 0,
       padding: '0 1.25rem',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: '1rem',
-      background: 'rgba(7, 9, 14, 0.75)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
+      background: 'rgba(7, 9, 14, 0.94)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
       borderBottom: '1px solid var(--border-subtle)',
       position: 'sticky',
       top: 0,
-      zIndex: 20
+      zIndex: 50,
+      boxSizing: 'border-box'
     }}>
       {/* Mobile Brand Logo & Name (Visible only on mobile in place of the search bar) */}
-      <div 
+      <div
         className="header-brand-mobile"
         onClick={handleLogoClick}
         title="Refresh home (playback continues)"
@@ -107,8 +111,8 @@ export default function Header({ searchQuery, onSearchChange }) {
         </div>
       </div>
 
-      {/* Desktop Search Input Bar (Visible on desktop/tablet, hidden on mobile) */}
-      <div className="header-search-bar" style={{ alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '680px' }}>
+      {/* Desktop Search Input Bar (Visible on desktop/tablet, placed on the complete left) */}
+      <div className="header-search-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', maxWidth: '520px', margin: 0 }}>
         <div style={{
           position: 'relative',
           flex: 1,
@@ -144,7 +148,7 @@ export default function Header({ searchQuery, onSearchChange }) {
       </div>
 
       {/* Right Action Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginLeft: 'auto' }}>
         {/* Queue Drawer Trigger */}
         <button
           onClick={() => setIsQueueOpen(!isQueueOpen)}

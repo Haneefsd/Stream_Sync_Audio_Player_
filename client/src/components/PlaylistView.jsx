@@ -77,6 +77,50 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
     }
   };
 
+  const [draggedTrackIndex, setDraggedTrackIndex] = useState(null);
+
+  const handleMoveTrackUp = (index) => {
+    if (index > 0) {
+      storageService.moveTrackInPlaylist(currentPlaylist.id, index, index - 1);
+      const updatedPlaylists = storageService.getPlaylists();
+      const updated = updatedPlaylists.find(p => p.id === currentPlaylist.id);
+      if (updated) {
+        setCurrentPlaylist(updated);
+        if (onPlaylistUpdate) onPlaylistUpdate(updated);
+      }
+    }
+  };
+
+  const handleMoveTrackDown = (index) => {
+    if (index < (currentPlaylist.tracks?.length || 0) - 1) {
+      storageService.moveTrackInPlaylist(currentPlaylist.id, index, index + 1);
+      const updatedPlaylists = storageService.getPlaylists();
+      const updated = updatedPlaylists.find(p => p.id === currentPlaylist.id);
+      if (updated) {
+        setCurrentPlaylist(updated);
+        if (onPlaylistUpdate) onPlaylistUpdate(updated);
+      }
+    }
+  };
+
+  const handleDragStartRow = (e, index) => {
+    e.dataTransfer.setData('text/plain', String(index));
+    setDraggedTrackIndex(index);
+  };
+
+  const handleDropRow = (e, dropIndex) => {
+    e.preventDefault();
+    if (draggedTrackIndex === null || draggedTrackIndex === dropIndex) return;
+    storageService.moveTrackInPlaylist(currentPlaylist.id, draggedTrackIndex, dropIndex);
+    const updatedPlaylists = storageService.getPlaylists();
+    const updated = updatedPlaylists.find(p => p.id === currentPlaylist.id);
+    if (updated) {
+      setCurrentPlaylist(updated);
+      if (onPlaylistUpdate) onPlaylistUpdate(updated);
+    }
+    setDraggedTrackIndex(null);
+  };
+
   const handleSaveCoverUrl = (e) => {
     e.preventDefault();
     const updated = storageService.updatePlaylist(currentPlaylist.id, { coverUrl: coverInputUrl.trim() });
@@ -560,6 +604,12 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
                 trackList={currentPlaylist.tracks}
                 playlistId={currentPlaylist.id}
                 onRemove={handleRemoveTrack}
+                onMoveUp={handleMoveTrackUp}
+                onMoveDown={handleMoveTrackDown}
+                isFirst={i === 0}
+                isLast={i === currentPlaylist.tracks.length - 1}
+                onDragStartRow={handleDragStartRow}
+                onDropRow={handleDropRow}
               />
             ))}
           </div>

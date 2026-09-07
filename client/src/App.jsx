@@ -20,6 +20,7 @@ function MainApp() {
     activeTab, 
     setActiveTab, 
     pageRefreshKey,
+    currentTrack,
     isQueueOpen, 
     setIsQueueOpen, 
     isFullscreenPlayerOpen, 
@@ -76,7 +77,7 @@ function MainApp() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${currentTrack ? 'has-mobile-player' : ''}`}>
       {/* Mobile Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${isMobileMenuOpen ? 'is-active' : ''}`}

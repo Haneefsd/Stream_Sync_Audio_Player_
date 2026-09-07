@@ -2,11 +2,25 @@ import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/formatters';
-import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2 } from 'lucide-react';
+import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
-export default function TrackRow({ track, index, trackList = null, playlistId = null, onRemove = null }) {
+export default function TrackRow({
+  track,
+  index,
+  trackList = null,
+  playlistId = null,
+  onRemove = null,
+  onMoveUp = null,
+  onMoveDown = null,
+  isFirst = false,
+  isLast = false,
+  onDragStartRow = null,
+  onDragOverRow = null,
+  onDropRow = null
+}) {
   const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue, openAddToPlaylist } = useAudioPlayer();
   const [isLiked, setIsLiked] = useState(storageService.isFavorite(track.id));
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const isCurrent = currentTrack?.id === track.id;
   const isThisPlaying = isCurrent && isPlaying;
@@ -39,6 +53,30 @@ export default function TrackRow({ track, index, trackList = null, playlistId = 
     <div
       className={`track-row ${isCurrent ? 'is-active' : ''}`}
       onClick={handleRowClick}
+      draggable={Boolean(onDropRow)}
+      onDragStart={(e) => {
+        if (onDragStartRow) onDragStartRow(e, index);
+      }}
+      onDragOver={(e) => {
+        if (onDropRow) {
+          e.preventDefault();
+          setIsDragOver(true);
+          if (onDragOverRow) onDragOverRow(e, index);
+        }
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        if (onDropRow) {
+          e.preventDefault();
+          setIsDragOver(false);
+          onDropRow(e, index);
+        }
+      }}
+      style={{
+        borderTop: isDragOver ? '2px solid var(--accent-emerald)' : undefined,
+        background: isDragOver ? 'rgba(16, 185, 129, 0.12)' : undefined,
+        transition: 'background 0.15s ease, border 0.15s ease'
+      }}
     >
       {/* Index or Animated Equalizer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -89,8 +127,42 @@ export default function TrackRow({ track, index, trackList = null, playlistId = 
       </div>
       
       {/* Duration & Quick Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.65rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
         <span className="row-duration-text">{formatTime(track.duration)}</span>
+
+        {/* Move Up / Move Down buttons */}
+        {(onMoveUp || onMoveDown) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }} onClick={(e) => e.stopPropagation()}>
+            {onMoveUp && (
+              <button
+                onClick={() => onMoveUp(index)}
+                disabled={isFirst}
+                style={{
+                  color: isFirst ? 'rgba(255,255,255,0.15)' : 'var(--text-muted)',
+                  padding: '2px',
+                  cursor: isFirst ? 'default' : 'pointer'
+                }}
+                title="Move Up"
+              >
+                <ChevronUp size={15} />
+              </button>
+            )}
+            {onMoveDown && (
+              <button
+                onClick={() => onMoveDown(index)}
+                disabled={isLast}
+                style={{
+                  color: isLast ? 'rgba(255,255,255,0.15)' : 'var(--text-muted)',
+                  padding: '2px',
+                  cursor: isLast ? 'default' : 'pointer'
+                }}
+                title="Move Down"
+              >
+                <ChevronDown size={15} />
+              </button>
+            )}
+          </div>
+        )}
 
         <button
           onClick={handleLikeToggle}
@@ -127,6 +199,16 @@ export default function TrackRow({ track, index, trackList = null, playlistId = 
           >
             <Trash2 size={14} />
           </button>
+        )}
+
+        {onDropRow && (
+          <div
+            title="Hold and drag to reorder"
+            style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '2px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical size={15} />
+          </div>
         )}
       </div>
     </div>

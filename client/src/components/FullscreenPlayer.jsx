@@ -173,15 +173,56 @@ export default function FullscreenPlayer({ onClose }) {
 
   if (!currentTrack) return null;
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragTime, setDragTime] = useState(0);
+
+  const getTargetTimeFromEvent = (e) => {
+    if (!seekSliderRef.current || !duration) return 0;
+    const rect = seekSliderRef.current.getBoundingClientRect();
+    const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+    const clickX = clientX - rect.left;
+    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+    return pct * duration;
+  };
 
   const handleSeekClick = (e) => {
-    if (!seekSliderRef.current || !duration) return;
-    const rect = seekSliderRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const pct = Math.max(0, Math.min(1, clickX / rect.width));
-    seekTo(pct * duration);
+    const target = getTargetTimeFromEvent(e);
+    seekTo(target);
   };
+
+  const handleSeekStart = (e) => {
+    if (!duration) return;
+    setIsDragging(true);
+    const target = getTargetTimeFromEvent(e);
+    setDragTime(target);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMove = (e) => {
+      const target = getTargetTimeFromEvent(e);
+      setDragTime(target);
+    };
+
+    const handleEnd = (e) => {
+      setIsDragging(false);
+      const target = getTargetTimeFromEvent(e);
+      seekTo(target);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging, duration, seekTo]);
 
   return (
     <div className="fullscreen-player-container">
@@ -393,25 +434,44 @@ export default function FullscreenPlayer({ onClose }) {
         </div>
 
         {/* Seek Bar */}
-        <div className="seek-track-wrapper" style={{ maxWidth: '100%' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', width: '45px', textAlign: 'right' }}>
-            {formatTime(currentTime)}
-          </span>
+        {(() => {
+          const displayTime = isDragging ? dragTime : currentTime;
+          const displayPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+          return (
+            <div className="seek-track-wrapper" style={{ maxWidth: '100%' }}>
+              <span style={{ fontSize: '0.85rem', color: isDragging ? 'var(--accent-emerald)' : 'var(--text-muted)', width: '45px', textAlign: 'right', fontWeight: isDragging ? 700 : 400 }}>
+                {formatTime(displayTime)}
+              </span>
 
-          <div
-            ref={seekSliderRef}
-            className="slider-container"
-            onClick={handleSeekClick}
-            style={{ height: '8px' }}
-          >
-            <div className="slider-progress" style={{ width: `${progressPercent}%` }}></div>
-            <div className="slider-thumb" style={{ left: `${progressPercent}%`, width: '16px', height: '16px', opacity: 1 }}></div>
-          </div>
+              <div
+                ref={seekSliderRef}
+                className="slider-container"
+                onClick={handleSeekClick}
+                onMouseDown={handleSeekStart}
+                onTouchStart={handleSeekStart}
+                style={{ height: '8px', cursor: 'pointer' }}
+              >
+                <div className="slider-progress" style={{ width: `${displayPercent}%` }}></div>
+                <div 
+                  className="slider-thumb" 
+                  style={{ 
+                    left: `${displayPercent}%`, 
+                    width: '16px', 
+                    height: '16px', 
+                    opacity: 1,
+                    transform: isDragging ? 'translate(-50%, -50%) scale(1.4)' : undefined,
+                    background: isDragging ? 'var(--accent-emerald)' : undefined,
+                    boxShadow: isDragging ? '0 0 12px var(--accent-emerald-glow)' : undefined
+                  }}
+                ></div>
+              </div>
 
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', width: '45px' }}>
-            {formatTime(duration)}
-          </span>
-        </div>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', width: '45px' }}>
+                {formatTime(duration)}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Large Media Control Buttons (Desktop only, on mobile the docked PlayerBar handles playback) */}
         <div className="fullscreen-desktop-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>

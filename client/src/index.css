@@ -593,6 +593,10 @@ input {
   to { opacity: 1; }
 }
 
+.header-brand-mobile {
+  display: none;
+}
+
 /* --- Responsive adjustments --- */
 @media (max-width: 1024px) {
   :root {
@@ -745,13 +749,22 @@ input {
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
   }
   
+  /* Hide placeholder playbar on mobile when no song has been selected */
+  .player-bar.is-hidden-mobile {
+    display: none !important;
+  }
+
   .player-bar-center, .player-bar-right {
     display: none;
   }
   
   .main-viewport {
-    height: calc(100dvh - var(--mobile-nav-height) - var(--player-height-mobile));
+    height: calc(100dvh - var(--mobile-nav-height));
     padding-bottom: 2rem;
+  }
+
+  .app-container.has-mobile-player .main-viewport {
+    height: calc(100dvh - var(--mobile-nav-height) - var(--player-height-mobile));
   }
 
   .content-scrollable {

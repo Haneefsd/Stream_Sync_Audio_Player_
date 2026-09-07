@@ -44,6 +44,8 @@ export default function PlayerBar() {
   } = useAudioPlayer();
 
   const [isLiked, setIsLiked] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragTime, setDragTime] = useState(0);
   const seekSliderRef = useRef(null);
 
   // Sync like state
@@ -60,17 +62,57 @@ export default function PlayerBar() {
     setIsLiked(!isLiked);
   };
 
-  const handleSeekClick = (e) => {
-    if (!seekSliderRef.current || !duration) return;
+  const getTargetTimeFromEvent = (e) => {
+    if (!seekSliderRef.current || !duration) return 0;
     const rect = seekSliderRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+    const clickX = clientX - rect.left;
     const pct = Math.max(0, Math.min(1, clickX / rect.width));
-    seekTo(pct * duration);
+    return pct * duration;
   };
+
+  const handleSeekClick = (e) => {
+    const target = getTargetTimeFromEvent(e);
+    seekTo(target);
+  };
+
+  const handleSeekStart = (e) => {
+    if (!duration) return;
+    setIsDragging(true);
+    const target = getTargetTimeFromEvent(e);
+    setDragTime(target);
+  };
+
+  React.useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMove = (e) => {
+      const target = getTargetTimeFromEvent(e);
+      setDragTime(target);
+    };
+
+    const handleEnd = (e) => {
+      setIsDragging(false);
+      const target = getTargetTimeFromEvent(e);
+      seekTo(target);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging, duration, seekTo]);
 
   if (!currentTrack) {
     return (
-      <div className="player-bar" style={{ opacity: 0.6, pointerEvents: 'none' }}>
+      <div className="player-bar is-hidden-mobile" style={{ opacity: 0.6, pointerEvents: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--bg-elevated)' }}></div>
           <div>
@@ -242,24 +284,41 @@ export default function PlayerBar() {
         </div>
 
         {/* Seek Track Bar */}
-        <div className="seek-track-wrapper">
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', width: '35px', textAlign: 'right' }}>
-            {formatTime(currentTime)}
-          </span>
+        {(() => {
+          const displayTime = isDragging ? dragTime : currentTime;
+          const displayPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+          return (
+            <div className="seek-track-wrapper">
+              <span style={{ fontSize: '0.72rem', color: isDragging ? 'var(--accent-emerald)' : 'var(--text-muted)', width: '35px', textAlign: 'right', fontWeight: isDragging ? 700 : 400 }}>
+                {formatTime(displayTime)}
+              </span>
 
-          <div
-            ref={seekSliderRef}
-            className="slider-container"
-            onClick={handleSeekClick}
-          >
-            <div className="slider-progress" style={{ width: `${progressPercent}%` }}></div>
-            <div className="slider-thumb" style={{ left: `${progressPercent}%` }}></div>
-          </div>
+              <div
+                ref={seekSliderRef}
+                className="slider-container"
+                onClick={handleSeekClick}
+                onMouseDown={handleSeekStart}
+                onTouchStart={handleSeekStart}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="slider-progress" style={{ width: `${displayPercent}%` }}></div>
+                <div 
+                  className="slider-thumb" 
+                  style={{ 
+                    left: `${displayPercent}%`,
+                    transform: isDragging ? 'translate(-50%, -50%) scale(1.3)' : undefined,
+                    background: isDragging ? 'var(--accent-emerald)' : undefined,
+                    boxShadow: isDragging ? '0 0 10px var(--accent-emerald-glow)' : undefined
+                  }}
+                ></div>
+              </div>
 
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', width: '35px' }}>
-            {formatTime(duration)}
-          </span>
-        </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', width: '35px' }}>
+                {formatTime(duration)}
+              </span>
+            </div>
+          );
+        })()}
       </div>
 
       {/* 3. Right Volume & Tools Section */}

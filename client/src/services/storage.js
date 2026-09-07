@@ -151,6 +151,32 @@ export const storageService = {
     return true;
   },
 
+  movePlaylist: (fromIndex, toIndex) => {
+    let playlists = storageService.getPlaylists();
+    if (fromIndex < 0 || fromIndex >= playlists.length || toIndex < 0 || toIndex >= playlists.length) return false;
+    const [moved] = playlists.splice(fromIndex, 1);
+    playlists.splice(toIndex, 0, moved);
+    localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('playlistsUpdated', { detail: { type: 'reorderPlaylists' } }));
+    }
+    return true;
+  },
+
+  moveTrackInPlaylist: (playlistId, fromIndex, toIndex) => {
+    let playlists = storageService.getPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist || !playlist.tracks) return false;
+    if (fromIndex < 0 || fromIndex >= playlist.tracks.length || toIndex < 0 || toIndex >= playlist.tracks.length) return false;
+    const [movedTrack] = playlist.tracks.splice(fromIndex, 1);
+    playlist.tracks.splice(toIndex, 0, movedTrack);
+    localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('playlistsUpdated', { detail: { playlistId, type: 'reorderTracks' } }));
+    }
+    return true;
+  },
+
   // --- Recently Played History ---
   getHistory: () => {
     try {

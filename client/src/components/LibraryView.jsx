@@ -11,7 +11,10 @@ import {
   Trash2, 
   Music, 
   Image,
-  Upload
+  Upload,
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 export default function LibraryView({ onSelectPlaylist }) {
@@ -23,11 +26,53 @@ export default function LibraryView({ onSelectPlaylist }) {
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistCoverUrl, setNewPlaylistCoverUrl] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [draggedPlaylistIndex, setDraggedPlaylistIndex] = useState(null);
+  const [dragOverPlaylistIndex, setDragOverPlaylistIndex] = useState(null);
 
   useEffect(() => {
-    setFavorites(storageService.getFavorites());
-    setPlaylists(storageService.getPlaylists());
+    const syncPlaylists = () => {
+      setFavorites(storageService.getFavorites());
+      setPlaylists(storageService.getPlaylists());
+    };
+    syncPlaylists();
+    window.addEventListener('playlistsUpdated', syncPlaylists);
+    return () => window.removeEventListener('playlistsUpdated', syncPlaylists);
   }, []);
+
+  const handleMovePlaylistUp = (e, index) => {
+    e.stopPropagation();
+    if (index > 0) {
+      storageService.movePlaylist(index, index - 1);
+      setPlaylists(storageService.getPlaylists());
+    }
+  };
+
+  const handleMovePlaylistDown = (e, index) => {
+    e.stopPropagation();
+    if (index < playlists.length - 1) {
+      storageService.movePlaylist(index, index + 1);
+      setPlaylists(storageService.getPlaylists());
+    }
+  };
+
+  const handleDragStartPlaylist = (e, index) => {
+    e.dataTransfer.setData('text/plain', String(index));
+    setDraggedPlaylistIndex(index);
+  };
+
+  const handleDragOverPlaylist = (e, index) => {
+    e.preventDefault();
+    setDragOverPlaylistIndex(index);
+  };
+
+  const handleDropPlaylist = (e, dropIndex) => {
+    e.preventDefault();
+    setDragOverPlaylistIndex(null);
+    if (draggedPlaylistIndex === null || draggedPlaylistIndex === dropIndex) return;
+    storageService.movePlaylist(draggedPlaylistIndex, dropIndex);
+    setPlaylists(storageService.getPlaylists());
+    setDraggedPlaylistIndex(null);
+  };
 
   const handlePlayAllFavorites = (e) => {
     if (e) e.stopPropagation();
@@ -243,24 +288,83 @@ export default function LibraryView({ onSelectPlaylist }) {
             )}
 
             {/* CUSTOM USER PLAYLIST CARDS */}
-            {playlists.map(pl => {
+            {playlists.map((pl, idx) => {
               const coverImage = storageService.getPlaylistCover(pl);
+              const isDragOver = dragOverPlaylistIndex === idx;
               return (
                 <div
                   key={pl.id}
                   onClick={() => onSelectPlaylist && onSelectPlaylist(pl)}
                   className="glass-panel"
+                  draggable
+                  onDragStart={(e) => handleDragStartPlaylist(e, idx)}
+                  onDragOver={(e) => handleDragOverPlaylist(e, idx)}
+                  onDragLeave={() => setDragOverPlaylistIndex(null)}
+                  onDrop={(e) => handleDropPlaylist(e, idx)}
                   style={{
                     padding: '1.25rem',
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    position: 'relative'
+                    position: 'relative',
+                    border: isDragOver ? '2px solid var(--accent-emerald)' : undefined,
+                    background: isDragOver ? 'rgba(16, 185, 129, 0.12)' : undefined
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
                   onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
+                  {/* Top Control Overlay: Grip Handle + Move Up/Down + Delete */}
+                  <div 
+                    style={{ 
+                      position: 'absolute', 
+                      top: '10px', 
+                      left: '10px', 
+                      right: '10px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      zIndex: 5 
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(0, 0, 0, 0.55)', backdropFilter: 'blur(8px)', borderRadius: 'var(--radius-full)', padding: '2px 6px' }}>
+                      <div title="Hold and drag to reorder" style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <GripVertical size={14} />
+                      </div>
+                      <button
+                        onClick={(e) => handleMovePlaylistUp(e, idx)}
+                        disabled={idx === 0}
+                        style={{ color: idx === 0 ? 'rgba(255,255,255,0.2)' : '#fff', padding: '2px' }}
+                        title="Move Left/Up"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => handleMovePlaylistDown(e, idx)}
+                        disabled={idx === playlists.length - 1}
+                        style={{ color: idx === playlists.length - 1 ? 'rgba(255,255,255,0.2)' : '#fff', padding: '2px' }}
+                        title="Move Right/Down"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '50%',
+                        background: 'rgba(0, 0, 0, 0.55)',
+                        backdropFilter: 'blur(8px)',
+                        color: 'var(--text-muted)'
+                      }}
+                      title="Delete playlist"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
                   <div style={{
                     width: '100%',
                     aspectRatio: '1/1',
@@ -314,22 +418,6 @@ export default function LibraryView({ onSelectPlaylist }) {
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {pl.tracks?.length || 0} tracks {pl.coverUrl ? '• Custom Photo' : ''}
                   </span>
-
-                  <button
-                    onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)}
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      padding: '6px',
-                      borderRadius: '50%',
-                      background: 'rgba(0, 0, 0, 0.5)',
-                      color: 'var(--text-muted)'
-                    }}
-                    title="Delete playlist"
-                  >
-                    <Trash2 size={14} />
-                  </button>
                 </div>
               );
             })}
