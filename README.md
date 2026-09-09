@@ -48,6 +48,7 @@
 * 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
 * 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
 * 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, playlist creation, track removal) with contextual warnings.
+* 📲 **Full Progressive Web App (PWA) Support:** StreamSync is 100% PWA compliant (`vite-plugin-pwa`) with automatic Service Worker offline app shell caching, standalone app window installation for desktop and mobile, custom app icons, and an interactive **Install App** header button (`InstallPwaPrompt.jsx`).
 * 🎨 **Curated Vibrant Theme, Glassmorphism & Hover Micro-Animations:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with dynamic 24px backdrop blurs, 3D hover scale & lift effects, glowing emerald/cyan border highlights, springy button feedback, and a strict **Zero Pink Guarantee**.
 
 ---

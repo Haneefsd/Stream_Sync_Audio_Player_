@@ -25,5 +25,8 @@
     "stateless"
   ],
   "author": "Haneefsd",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vite-plugin-pwa": "^1.3.0"
+  }
 }

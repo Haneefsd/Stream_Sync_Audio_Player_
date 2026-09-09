@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { Search, X, ListMusic, Radio } from 'lucide-react';
+import InstallPwaPrompt from './InstallPwaPrompt';
 
 export default function Header({ searchQuery, onSearchChange }) {
   const {
@@ -149,6 +150,9 @@ export default function Header({ searchQuery, onSearchChange }) {
 
       {/* Right Action Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginLeft: 'auto' }}>
+        {/* PWA Install Prompt */}
+        <InstallPwaPrompt />
+
         {/* Queue Drawer Trigger */}
         <button
           onClick={() => setIsQueueOpen(!isQueueOpen)}
