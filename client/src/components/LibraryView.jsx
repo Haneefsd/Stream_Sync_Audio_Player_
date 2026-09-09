@@ -3,18 +3,16 @@ import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { useConfirmation } from '../context/ConfirmationContext';
 import { storageService } from '../services/storage';
 import TrackRow from './TrackRow';
-import { 
-  Heart, 
-  ListMusic, 
-  Play, 
-  Plus, 
-  Trash2, 
-  Music, 
+import {
+  Heart,
+  ListMusic,
+  Play,
+  Plus,
+  Trash2,
+  Music,
   Image,
   Upload,
-  GripVertical,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 export default function LibraryView({ onSelectPlaylist }) {
@@ -38,22 +36,6 @@ export default function LibraryView({ onSelectPlaylist }) {
     window.addEventListener('playlistsUpdated', syncPlaylists);
     return () => window.removeEventListener('playlistsUpdated', syncPlaylists);
   }, []);
-
-  const handleMovePlaylistUp = (e, index) => {
-    e.stopPropagation();
-    if (index > 0) {
-      storageService.movePlaylist(index, index - 1);
-      setPlaylists(storageService.getPlaylists());
-    }
-  };
-
-  const handleMovePlaylistDown = (e, index) => {
-    e.stopPropagation();
-    if (index < playlists.length - 1) {
-      storageService.movePlaylist(index, index + 1);
-      setPlaylists(storageService.getPlaylists());
-    }
-  };
 
   const handleDragStartPlaylist = (e, index) => {
     e.dataTransfer.setData('text/plain', String(index));
@@ -91,7 +73,7 @@ export default function LibraryView({ onSelectPlaylist }) {
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
-    
+
     requestConfirmation({
       title: 'Create Playlist',
       message: `Are you sure you want to create a new playlist named "${newPlaylistName.trim()}"?`,
@@ -100,8 +82,8 @@ export default function LibraryView({ onSelectPlaylist }) {
       actionType: 'create',
       onConfirm: () => {
         const created = storageService.createPlaylist(
-          newPlaylistName.trim(), 
-          '', 
+          newPlaylistName.trim(),
+          '',
           newPlaylistCoverUrl.trim()
         );
         setNewPlaylistName('');
@@ -315,41 +297,19 @@ export default function LibraryView({ onSelectPlaylist }) {
                   onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
                   {/* Top Control Overlay: Grip Handle + Move Up/Down + Delete */}
-                  <div 
-                    style={{ 
-                      position: 'absolute', 
-                      top: '10px', 
-                      left: '10px', 
-                      right: '10px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between', 
-                      zIndex: 5 
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      right: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      zIndex: 5
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(0, 0, 0, 0.55)', backdropFilter: 'blur(8px)', borderRadius: 'var(--radius-full)', padding: '2px 6px' }}>
-                      <div title="Hold and drag to reorder" style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                        <GripVertical size={14} />
-                      </div>
-                      <button
-                        onClick={(e) => handleMovePlaylistUp(e, idx)}
-                        disabled={idx === 0}
-                        style={{ color: idx === 0 ? 'rgba(255,255,255,0.2)' : '#fff', padding: '2px' }}
-                        title="Move Left/Up"
-                      >
-                        <ChevronUp size={14} />
-                      </button>
-                      <button
-                        onClick={(e) => handleMovePlaylistDown(e, idx)}
-                        disabled={idx === playlists.length - 1}
-                        style={{ color: idx === playlists.length - 1 ? 'rgba(255,255,255,0.2)' : '#fff', padding: '2px' }}
-                        title="Move Right/Down"
-                      >
-                        <ChevronDown size={14} />
-                      </button>
-                    </div>
-
                     <button
                       onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)}
                       style={{
@@ -379,15 +339,15 @@ export default function LibraryView({ onSelectPlaylist }) {
                     overflow: 'hidden'
                   }}>
                     {coverImage ? (
-                      <img 
-                        src={coverImage} 
+                      <img
+                        src={coverImage}
                         alt={pl.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
                       <Music size={40} color="var(--accent-emerald)" />
                     )}
-                    
+
                     {pl.tracks && pl.tracks.length > 0 && (
                       <button
                         onClick={(e) => handlePlayPlaylist(e, pl)}
@@ -466,8 +426,8 @@ export default function LibraryView({ onSelectPlaylist }) {
 
       {/* Create Playlist Modal with Custom Photo Support */}
       {showCreateModal && (
-        <div 
-          className="modal-backdrop" 
+        <div
+          className="modal-backdrop"
           onClick={() => setShowCreateModal(false)}
           style={{
             position: 'fixed',
@@ -482,8 +442,8 @@ export default function LibraryView({ onSelectPlaylist }) {
             padding: '1.5rem'
           }}
         >
-          <div 
-            className="glass-panel" 
+          <div
+            className="glass-panel"
             style={{ width: '100%', maxWidth: '440px', padding: '2rem', background: 'var(--bg-surface)' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -542,7 +502,7 @@ export default function LibraryView({ onSelectPlaylist }) {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
-                  title="Upload from device"
+                    title="Upload from device"
                   >
                     <Upload size={16} />
                     <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />

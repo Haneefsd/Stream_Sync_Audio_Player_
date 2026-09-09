@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/formatters';
-import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Play, Pause, Heart, ListPlus, FolderPlus, Trash2, GripVertical } from 'lucide-react';
 
 export default function TrackRow({
   track,
@@ -10,8 +10,6 @@ export default function TrackRow({
   trackList = null,
   playlistId = null,
   onRemove = null,
-  onMoveUp = null,
-  onMoveDown = null,
   isFirst = false,
   isLast = false,
   onDragStartRow = null,
@@ -130,39 +128,7 @@ export default function TrackRow({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.65rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
         <span className="row-duration-text">{formatTime(track.duration)}</span>
 
-        {/* Move Up / Move Down buttons */}
-        {(onMoveUp || onMoveDown) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }} onClick={(e) => e.stopPropagation()}>
-            {onMoveUp && (
-              <button
-                onClick={() => onMoveUp(index)}
-                disabled={isFirst}
-                style={{
-                  color: isFirst ? 'rgba(255,255,255,0.15)' : 'var(--text-muted)',
-                  padding: '2px',
-                  cursor: isFirst ? 'default' : 'pointer'
-                }}
-                title="Move Up"
-              >
-                <ChevronUp size={15} />
-              </button>
-            )}
-            {onMoveDown && (
-              <button
-                onClick={() => onMoveDown(index)}
-                disabled={isLast}
-                style={{
-                  color: isLast ? 'rgba(255,255,255,0.15)' : 'var(--text-muted)',
-                  padding: '2px',
-                  cursor: isLast ? 'default' : 'pointer'
-                }}
-                title="Move Down"
-              >
-                <ChevronDown size={15} />
-              </button>
-            )}
-          </div>
-        )}
+
 
         <button
           onClick={handleLikeToggle}

@@ -34,7 +34,7 @@
 * 🚀 **Zero Database & 100% Stateless:** No MongoDB, PostgreSQL, or Redis required. Playlists, favorites, listening history, search history, and player settings are stored securely in browser `localStorage`.
 * ⚡ **Instant Client-Side Streaming:** Powered by an embedded headless player engine that bypasses proxy bottlenecks, eliminates CORS errors, and supports hardware-accelerated playback.
 * 🎛️ **Hold & Drag Real-Time Seek Bar Scrubbing:** Users can click/touch and hold the seek bar thumb to continuously drag forward and backward across playback timestamps in real-time in both `PlayerBar.jsx` and `FullscreenPlayer.jsx`.
-* 🖐️ **Drag & Drop Song & Playlist Reordering:** Hold and drag tracks or custom playlists to any desired position using dedicated drag grip handles (`GripVertical`), HTML5 drag-and-drop, or quick **Move Up / Move Down** (`ChevronUp`/`ChevronDown`) buttons in `PlaylistView.jsx`, `TrackRow.jsx`, and `LibraryView.jsx`.
+* 🖐️ **Clean Drag & Drop Song & Playlist Reordering:** Hold and drag tracks or custom playlists to any desired position using dedicated drag grip handles (`GripVertical`) and HTML5 drag-and-drop, featuring a clean 5-column layout without up/down arrow clutter in `LibraryView.jsx`, `PlaylistView.jsx`, and `TrackRow.jsx`.
 * 📌 **Locked Left-Aligned Header & Fixed Panel Height:** In desktop/full-screen mode, the search bar is positioned on the complete left of the header bar, and the header height is strictly locked (`height: var(--header-height)`, `flexShrink: 0`) across every panel with glassmorphic blur.
 * 📱 **Mobile-First App Experience & Smart Mobile Playbar:** Features a fixed Spotify-style bottom navigation bar (`MobileBottomNav.jsx`) with 5 dedicated tabs. In responsive mode, the mini player bar stays docked directly above the navigation bar whenever a song is loaded (whether actively playing or paused), and hides only when no track is selected (`!currentTrack`) to maximize screen space.
 * 🔽 **Auto-Minimizing Visualizer on Bottom Actions:** When the visualizer or lyrics view is open in mobile mode, tapping any bottom navigation button or tapping the mini-player bar automatically minimizes the visualizer and switches to the destination view.
@@ -48,7 +48,7 @@
 * 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
 * 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
 * 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, playlist creation, track removal) with contextual warnings.
-* 🎨 **Curated Vibrant Glassmorphic UI:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with a strict **Zero Pink Guarantee**.
+* 🎨 **Curated Vibrant Theme, Glassmorphism & Hover Micro-Animations:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with dynamic 24px backdrop blurs, 3D hover scale & lift effects, glowing emerald/cyan border highlights, springy button feedback, and a strict **Zero Pink Guarantee**.
 
 ---
 
@@ -149,13 +149,19 @@
 * **Rock-Solid Mini Player:** The mobile player bar (`PlayerBar.jsx`) is fixed directly above the bottom nav at `bottom: var(--mobile-nav-height)` (`60px`). It remains stable and stationary during scrolling, browsing, and tab switching.
 * **Context-Guarded Playlist Creation:** Tapping the **Create** tab on the bottom bar triggers a confirmation modal to name and create a new playlist with one tap.
 
-### 8. Curated Vibrant Theme & Glassmorphism
+### 8. Curated Vibrant Theme, Glassmorphism & Hover Micro-Animations
 * **Modern Palette:** Built using curated colors tailored for high visual appeal:
   * **Electric Indigo:** `#6366f1` / `#4f46e5` (Liked Songs hero, active state highlights)
   * **Emerald Green:** `#10b981` (Primary accents, play buttons, sliders)
   * **Mint Cyan:** `#06b6d4` (Active lyrics, secondary highlights)
   * **Sunset Amber:** `#f59e0b` (Badges, warnings, secondary chips)
   * **Deep Obsidian Surface:** `#07090e` / `#0e131f` (Glassmorphic dark backgrounds)
+* **Hover Effects & Micro-Animations:**
+  * **Track Cards (`.track-card`):** 3D card lift (`translateY(-7px) scale(1.015)`), image scale glow, and play icon slide-up animation.
+  * **Track Rows (`.track-row`):** Smooth horizontal slide (`translateX(4px)`), gradient hover backgrounds, and interactive icon button scaling.
+  * **Sidebar Navigation:** Slide hover transition (`translateX(5px)`), glass highlight, and active emerald pill glow shadow.
+  * **Seek Bar Scrubbing:** Thumb expansion (`scale(1.25)`) with an emerald halo glow (`0 0 14px var(--accent-emerald)`).
+  * **Hero Banner:** Ambient floating background orb animation (`@keyframes floatOrb`) and subtle glowing border feedback.
 * **Zero Pink Guarantee:** Completely free of pink or magenta tones throughout all components, SVGs, and stylesheets.
 
 ---
@@ -437,7 +443,6 @@ Stream_Sync_Audio_Player_/
 | **Click Logo** | Header / Sidebar | Soft-refresh application to Home without interrupting music |
 | **Hold & Drag Seek Bar** | Player Bar / Visualizer | Click/touch and hold thumb to continuously drag forward/backward to adjust timestamp |
 | **Hold & Drag Grip (GripVertical)** | Playlists & Song Lists | Hold and drag songs or playlist cards to reorder positions |
-| **Chevron Up / Down Buttons** | Playlists & Song Lists | Move song or playlist position up or down by one spot |
 | **Click Lyrics Line** | Fullscreen Player | Seek playback directly to that lyric timestamp |
 | **Click Cover Art / Title** | Player Bar | Expand or minimize Fullscreen Visualizer & Lyrics |
 | **Tap Bottom Nav Tab** | Mobile | Switch view and automatically minimize visualizer if open |

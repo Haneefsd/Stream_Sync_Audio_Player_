@@ -604,8 +604,6 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
                 trackList={currentPlaylist.tracks}
                 playlistId={currentPlaylist.id}
                 onRemove={handleRemoveTrack}
-                onMoveUp={handleMoveTrackUp}
-                onMoveDown={handleMoveTrackDown}
                 isFirst={i === 0}
                 isLast={i === currentPlaylist.tracks.length - 1}
                 onDragStartRow={handleDragStartRow}
