@@ -159,8 +159,8 @@ export default function Sidebar({ onSelectPlaylist, selectedPlaylistId, isOpen, 
       </nav>
 
       {/* Custom Playlists Section */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '0 0.5rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', padding: '0.25rem 0.5rem', position: 'sticky', top: '0', backgroundColor: 'var(--bg-surface)', zIndex: 10, borderRadius: '6px' }}>
           <span className="sidebar-section-header" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Playlists
           </span>

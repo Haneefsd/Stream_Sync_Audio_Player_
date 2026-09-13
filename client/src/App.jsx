@@ -77,7 +77,7 @@ function MainApp() {
   };
 
   return (
-    <div className={`app-container ${currentTrack ? 'has-mobile-player' : ''}`}>
+    <div className={`app-container ${currentTrack ? 'has-player has-mobile-player' : ''}`}>
       {/* Mobile Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${isMobileMenuOpen ? 'is-active' : ''}`}

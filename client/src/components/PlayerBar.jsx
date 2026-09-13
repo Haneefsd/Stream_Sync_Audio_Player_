@@ -111,27 +111,31 @@ export default function PlayerBar() {
   }, [isDragging, duration, seekTo]);
 
   if (!currentTrack) {
-    return (
-      <div className="player-bar is-hidden-mobile" style={{ opacity: 0.6, pointerEvents: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--bg-elevated)' }}></div>
-          <div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Select a song to start streaming</div>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const handleBarClick = () => {
+    setIsFullscreenPlayerOpen(true);
+  };
+
+  const displayTime = isDragging ? dragTime : currentTime;
+  const displayPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
 
   return (
-    <div className="player-bar">
+    <div
+      className={`player-bar ${isFullscreenPlayerOpen ? 'is-fullscreen-open' : ''}`}
+      onClick={handleBarClick}
+      style={{ cursor: 'pointer' }}
+    >
       {/* 1. Left Track Metadata Section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', overflow: 'hidden' }}>
-        {/* Clickable Cover Art to Open/Minimize Fullscreen */}
+        {/* Clickable Cover Art */}
         <div
-          onClick={() => setIsFullscreenPlayerOpen(prev => !prev)}
+          className="player-bar-thumb"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFullscreenPlayerOpen(prev => !prev);
+          }}
           style={{
             position: 'relative',
             width: '54px',
@@ -170,7 +174,10 @@ export default function PlayerBar() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span
-              onClick={() => setIsFullscreenPlayerOpen(prev => !prev)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFullscreenPlayerOpen(prev => !prev);
+              }}
               style={{
                 fontSize: '0.92rem',
                 fontWeight: 700,
@@ -202,13 +209,31 @@ export default function PlayerBar() {
 
       {/* Mobile Controls (Visible only on < 768px) */}
       <div className="player-bar-mobile-controls" style={{ alignItems: 'center', gap: '0.85rem' }}>
-        <button onClick={handlePrevTrack} style={{ color: 'var(--text-primary)' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrevTrack();
+          }}
+          style={{ color: 'var(--text-primary)' }}
+        >
           <SkipBack size={22} fill="currentColor" />
         </button>
-        <button onClick={togglePlay} style={{ color: 'var(--text-primary)' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlay();
+          }}
+          style={{ color: 'var(--text-primary)' }}
+        >
           {isPlaying ? <Pause size={26} fill="currentColor" /> : <Play size={26} fill="currentColor" />}
         </button>
-        <button onClick={() => handleNextTrack(false)} style={{ color: 'var(--text-primary)' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNextTrack(false);
+          }}
+          style={{ color: 'var(--text-primary)' }}
+        >
           <SkipForward size={22} fill="currentColor" />
         </button>
       </div>
@@ -219,7 +244,10 @@ export default function PlayerBar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           {/* Shuffle */}
           <button
-            onClick={toggleShuffle}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleShuffle();
+            }}
             style={{ color: shuffle ? 'var(--accent-emerald)' : 'var(--text-muted)', transition: 'color 0.15s ease' }}
             title={`Shuffle ${shuffle ? 'On' : 'Off'}`}
           >
@@ -228,7 +256,10 @@ export default function PlayerBar() {
 
           {/* Previous Track */}
           <button
-            onClick={handlePrevTrack}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrevTrack();
+            }}
             style={{ color: 'var(--text-primary)', transition: 'transform 0.15s ease' }}
             title="Previous Track"
           >
@@ -237,7 +268,10 @@ export default function PlayerBar() {
 
           {/* Large Play/Pause Button */}
           <button
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
             style={{
               width: '42px',
               height: '42px',
@@ -266,7 +300,10 @@ export default function PlayerBar() {
 
           {/* Next Track */}
           <button
-            onClick={() => handleNextTrack(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNextTrack(false);
+            }}
             style={{ color: 'var(--text-primary)', transition: 'transform 0.15s ease' }}
             title="Next Track"
           >
@@ -275,7 +312,10 @@ export default function PlayerBar() {
 
           {/* Repeat Mode */}
           <button
-            onClick={toggleRepeatMode}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleRepeatMode();
+            }}
             style={{ color: repeatMode !== 'off' ? 'var(--accent-emerald)' : 'var(--text-muted)', transition: 'color 0.15s ease' }}
             title={`Repeat Mode: ${repeatMode}`}
           >
@@ -288,7 +328,7 @@ export default function PlayerBar() {
           const displayTime = isDragging ? dragTime : currentTime;
           const displayPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
           return (
-            <div className="seek-track-wrapper">
+            <div className="seek-track-wrapper" onClick={(e) => e.stopPropagation()}>
               <span style={{ fontSize: '0.72rem', color: isDragging ? 'var(--accent-emerald)' : 'var(--text-muted)', width: '35px', textAlign: 'right', fontWeight: isDragging ? 700 : 400 }}>
                 {formatTime(displayTime)}
               </span>
@@ -325,7 +365,10 @@ export default function PlayerBar() {
       <div className="player-bar-right" style={{ alignItems: 'center', justifyContent: 'flex-end', gap: '0.85rem' }}>
         {/* Lyrics & Visualizer Fullscreen Trigger */}
         <button
-          onClick={() => setIsFullscreenPlayerOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFullscreenPlayerOpen(true);
+          }}
           style={{ color: 'var(--text-secondary)', padding: '6px' }}
           title="Fullscreen Visualizer & Lyrics"
         >
@@ -333,7 +376,7 @@ export default function PlayerBar() {
         </button>
 
         {/* Volume Slider & Mute */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={(e) => e.stopPropagation()}>
           <button onClick={toggleMute} style={{ color: 'var(--text-secondary)', padding: '4px' }}>
             {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
@@ -354,7 +397,10 @@ export default function PlayerBar() {
 
         {/* Queue Drawer Toggle */}
         <button
-          onClick={() => setIsQueueOpen(!isQueueOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsQueueOpen(!isQueueOpen);
+          }}
           style={{
             color: isQueueOpen ? 'var(--accent-emerald)' : 'var(--text-secondary)',
             padding: '6px'
@@ -363,6 +409,14 @@ export default function PlayerBar() {
         >
           <ListMusic size={19} />
         </button>
+      </div>
+
+      {/* 4. Mobile Bottom Real-Time Progress Line */}
+      <div className="player-bar-mobile-progress">
+        <div
+          className="player-bar-mobile-progress-fill"
+          style={{ width: `${displayPercent}%` }}
+        />
       </div>
     </div>
   );

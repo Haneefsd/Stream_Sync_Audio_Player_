@@ -122,7 +122,7 @@ input {
 .app-container {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
-  grid-template-rows: 1fr var(--player-height);
+  grid-template-rows: 1fr;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
@@ -131,14 +131,23 @@ input {
               var(--bg-main);
 }
 
+.app-container.has-player {
+  grid-template-rows: 1fr var(--player-height);
+}
+
 /* Main Content Area */
 .main-viewport {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--player-height));
-  height: calc(100dvh - var(--player-height));
+  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   position: relative;
+}
+
+.app-container.has-player .main-viewport {
+  height: calc(100vh - var(--player-height));
+  height: calc(100dvh - var(--player-height));
 }
 
 .content-scrollable {
@@ -438,8 +447,13 @@ input {
 }
 
 /* Bottom Player Bar */
+.player-bar-mobile-progress {
+  display: none;
+}
+
 .player-bar {
   grid-column: 1 / -1;
+  position: relative;
   background: var(--bg-glass-strong);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
@@ -610,12 +624,30 @@ input {
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--player-height));
+  height: 100%;
   padding: 1.5rem 1.25rem;
   user-select: none;
   z-index: 100;
   width: var(--sidebar-width);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.sidebar *::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.sidebar *::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-emerald);
 }
 
 .sidebar-logo-text {
@@ -761,22 +793,24 @@ input {
 
   /* Mobile Bottom Navigation Bar (Options under PlayerBar) */
   .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: var(--mobile-nav-height);
-    background: rgba(7, 9, 14, 0.96);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border-top: 1px solid var(--border-subtle);
-    align-items: center;
-    justify-content: space-around;
-    z-index: 600;
-    padding: 0 0.25rem;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px;
+    height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(7, 9, 14, 0.96) !important;
+    backdrop-filter: blur(28px) !important;
+    -webkit-backdrop-filter: blur(28px) !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    z-index: 600 !important;
+    padding: 0 0.25rem !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+    margin: 0 !important;
   }
 
   .mobile-bottom-nav-item {
@@ -823,27 +857,57 @@ input {
     display: flex !important;
   }
 
-  /* Player Bar Mobile adjustments: Docked directly above mobile bottom nav */
+  /* Player Bar Mobile adjustments: Docked flush directly above mobile bottom nav */
   .player-bar {
-    position: fixed;
-    bottom: var(--mobile-nav-height);
-    left: 0;
-    right: 0;
-    height: var(--player-height-mobile);
-    grid-template-columns: 1fr auto;
-    padding: 0 1rem;
-    z-index: 550;
-    background: rgba(14, 17, 26, 0.96);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border-top: 1px solid var(--border-subtle);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+    position: fixed !important;
+    bottom: 60px;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    grid-template-columns: 1fr auto !important;
+    padding: 0 1rem !important;
+    z-index: 550 !important;
+    background: rgba(14, 17, 26, 0.96) !important;
+    backdrop-filter: blur(28px) !important;
+    -webkit-backdrop-filter: blur(28px) !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    border-bottom: none !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
+    overflow: hidden !important;
+    margin: 0 !important;
   }
   
-  /* Hide placeholder playbar on mobile when no song has been selected */
-  .player-bar.is-hidden-mobile {
+  /* Hide mini playbar on mobile when no song has been selected or when visualizer is open */
+  .player-bar.is-hidden-mobile,
+  .player-bar.is-fullscreen-open {
     display: none !important;
+  }
+
+  /* Real-time mini playbar progress indicator line on mobile (top edge) */
+  .player-bar-mobile-progress {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .player-bar-mobile-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-emerald) 0%, var(--accent-cyan) 100%);
+    box-shadow: 0 0 8px var(--accent-emerald-glow);
+    transition: width 0.15s linear;
+  }
+
+  .player-bar-thumb {
+    width: 42px !important;
+    height: 42px !important;
   }
 
   .player-bar-center, .player-bar-right {
@@ -851,12 +915,12 @@ input {
   }
   
   .main-viewport {
-    height: calc(100dvh - var(--mobile-nav-height));
+    height: calc(100dvh - 60px - env(safe-area-inset-bottom, 0px));
     padding-bottom: 2rem;
   }
 
   .app-container.has-mobile-player .main-viewport {
-    height: calc(100dvh - var(--mobile-nav-height) - var(--player-height-mobile));
+    height: calc(100dvh - 120px - env(safe-area-inset-bottom, 0px));
   }
 
   .content-scrollable {
