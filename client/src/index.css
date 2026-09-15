@@ -977,12 +977,12 @@ input {
 
   /* Fullscreen Visualizer & Lyrics Mobile Adjustments */
   .fullscreen-player-container {
-    padding: 1.25rem 1.25rem calc(var(--mobile-nav-height) + var(--player-height-mobile) + 0.85rem) 1.25rem !important;
-    justify-content: space-between;
+    padding: 1rem 1rem calc(60px + env(safe-area-inset-bottom, 0px) + 0.5rem) 1rem !important;
+    justify-content: space-between !important;
   }
 
   .fullscreen-top-bar {
-    margin-bottom: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
   }
 
   .fullscreen-top-add-playlist {
@@ -990,35 +990,41 @@ input {
   }
 
   .fullscreen-center-stage {
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.15rem 0.25rem !important;
   }
 
   .fullscreen-vinyl-disc {
-    width: min(28vh, 215px) !important;
-    height: min(28vh, 215px) !important;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9), 0 0 25px var(--accent-emerald-glow) !important;
+    width: min(22vh, 175px) !important;
+    height: min(22vh, 175px) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 20px var(--accent-emerald-glow) !important;
   }
 
   .fullscreen-spectrum-canvas-container {
-    max-width: 320px !important;
-    height: 42px !important;
+    max-width: 280px !important;
+    height: 36px !important;
   }
 
   .fullscreen-track-title {
-    font-size: 1.45rem !important;
+    font-size: 1.25rem !important;
   }
 
   .fullscreen-track-artist {
-    font-size: 0.92rem !important;
+    font-size: 0.85rem !important;
   }
 
   .fullscreen-desktop-controls {
-    display: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    width: 100% !important;
+    max-width: 360px !important;
+    margin: 0.35rem auto 0 auto !important;
+    gap: 0.85rem !important;
   }
 
   .fullscreen-bottom-controls-area {
-    gap: 0.55rem !important;
-    margin-bottom: 0.25rem !important;
+    gap: 0.45rem !important;
+    margin-bottom: 0.2rem !important;
   }
 }
 
