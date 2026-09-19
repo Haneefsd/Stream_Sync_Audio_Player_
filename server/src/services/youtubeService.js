@@ -3,6 +3,11 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import ytdl from '@distube/ytdl-core';
 import playdl from 'play-dl';
+import youtubedl from 'yt-dlp-exec';
+import { exec } from 'child_process';
+import util from 'util';
+
+const execPromise = util.promisify(exec);
 
 dotenv.config();
 
@@ -205,54 +210,71 @@ export async function getYouTubeTrending(historyQuery = '', limit = 24) {
   };
 }
 
-import { exec } from 'child_process';
-import util from 'util';
-import youtubedl from 'yt-dlp-exec';
-const execPromise = util.promisify(exec);
+const streamCache = new Map();
 
 /**
- * Obtain direct audio stream URL for a given videoId
+ * Obtain direct audio stream URL for a given videoId with in-memory caching
  */
 export async function getAudioStreamUrl(videoId) {
   if (!videoId) throw new Error('Video ID is required');
   const cleanId = videoId.replace('track_', '').replace('youtube_', '');
-  const watchUrl = `https://www.youtube.com/watch?v=${cleanId}`;
 
-  // Method 1: yt-dlp-exec with player_client overrides (android & tv_embedded bypass cloud IP blocks on Render/AWS)
-  const playerClients = ['android', 'tv_embedded', 'ios', 'mweb'];
-  for (const client of playerClients) {
-    try {
-      const output = await youtubedl(watchUrl, {
-        getUrl: true,
-        format: 'best[ext=m4a]/bestaudio/best',
-        noCheckCertificates: true,
-        noWarnings: true,
-        extractorArgs: `youtube:player_client=${client}`
-      });
-      if (output && typeof output === 'string') {
-        const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
-        if (lines.length > 0) return lines[0].trim();
-      }
-    } catch (err) {}
+  // 1. Check 4-hour in-memory cache
+  if (streamCache.has(cleanId)) {
+    const cached = streamCache.get(cleanId);
+    if (Date.now() < cached.expiresAt) {
+      return cached.url;
+    }
+    streamCache.delete(cleanId);
   }
 
-  // Method 2: Default yt-dlp-exec fallback
+  const watchUrl = `https://www.youtube.com/watch?v=${cleanId}`;
+
+  // 2. Primary Method: yt-dlp-exec with player_client=android (bypasses cloud IP blocks on Render)
   try {
     const output = await youtubedl(watchUrl, {
       getUrl: true,
-      format: 'bestaudio/best',
+      format: 'ba/b/best',
       noCheckCertificates: true,
-      noWarnings: true
+      noWarnings: true,
+      extractorArgs: 'youtube:player_client=android'
     });
+
     if (output && typeof output === 'string') {
       const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
-      if (lines.length > 0) return lines[0].trim();
+      if (lines.length > 0) {
+        const streamUrl = lines[0].trim();
+        streamCache.set(cleanId, { url: streamUrl, expiresAt: Date.now() + 4 * 3600 * 1000 });
+        return streamUrl;
+      }
     }
-  } catch (err1) {
-    console.warn('yt-dlp-exec default method error:', err1?.message);
+  } catch (err) {
+    console.warn('yt-dlp android method error:', err?.message);
   }
 
-  // Method 3: System Python / yt-dlp execution (tries python3, python, yt-dlp with android client)
+  // 3. Fallback Method: yt-dlp-exec with player_client=tv_embedded
+  try {
+    const output = await youtubedl(watchUrl, {
+      getUrl: true,
+      format: 'ba/b/best',
+      noCheckCertificates: true,
+      noWarnings: true,
+      extractorArgs: 'youtube:player_client=tv_embedded'
+    });
+
+    if (output && typeof output === 'string') {
+      const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
+      if (lines.length > 0) {
+        const streamUrl = lines[0].trim();
+        streamCache.set(cleanId, { url: streamUrl, expiresAt: Date.now() + 4 * 3600 * 1000 });
+        return streamUrl;
+      }
+    }
+  } catch (err) {
+    console.warn('yt-dlp tv_embedded method error:', err?.message);
+  }
+
+  // 4. Fallback Method: System Python / yt-dlp execution
   const pyCmds = [
     'python3 -m yt_dlp --extractor-args "youtube:player_client=android"',
     'python -m yt_dlp --extractor-args "youtube:player_client=android"',
@@ -260,36 +282,41 @@ export async function getAudioStreamUrl(videoId) {
   ];
   for (const cmd of pyCmds) {
     try {
-      const { stdout } = await execPromise(`${cmd} -g "${watchUrl}" -f "bestaudio/best"`, { timeout: 10000 });
+      const { stdout } = await execPromise(`${cmd} -g "${watchUrl}" -f "ba/b/best"`, { timeout: 12000 });
       const lines = stdout.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
-      if (lines.length > 0) return lines[0].trim();
+      if (lines.length > 0) {
+        const streamUrl = lines[0].trim();
+        streamCache.set(cleanId, { url: streamUrl, expiresAt: Date.now() + 4 * 3600 * 1000 });
+        return streamUrl;
+      }
     } catch (err) {}
   }
 
-  // Method 4: Public Invidious API instances fallback
+  // 5. Fallback Method: Invidious API instances
   const invidiousInstances = [
     'https://inv.tux.pizza/api/v1/videos/',
     'https://invidious.nerdvpn.de/api/v1/videos/',
     'https://vid.puffyan.us/api/v1/videos/',
     'https://yewtu.be/api/v1/videos/'
   ];
-
   for (const baseUrl of invidiousInstances) {
     try {
       const invRes = await axios.get(`${baseUrl}${cleanId}`, { timeout: 4000 });
       const adaptiveFormats = invRes.data?.adaptiveFormats || [];
       const audioFormat = adaptiveFormats.find(f => f.type?.includes('audio') && f.url);
       if (audioFormat && audioFormat.url) {
+        streamCache.set(cleanId, { url: audioFormat.url, expiresAt: Date.now() + 2 * 3600 * 1000 });
         return audioFormat.url;
       }
     } catch (e) {}
   }
 
-  // Method 5: ytdl-core fallback
+  // 6. Fallback Method: ytdl-core
   try {
     const info = await ytdl.getInfo(watchUrl);
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
     if (audioFormats[0]?.url) {
+      streamCache.set(cleanId, { url: audioFormats[0].url, expiresAt: Date.now() + 2 * 3600 * 1000 });
       return audioFormats[0].url;
     }
   } catch (err3) {}

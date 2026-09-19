@@ -12,12 +12,12 @@ export async function lyricsHandler(req, res) {
 
     const lyricsData = await getLyrics(title, artist, duration);
     if (!lyricsData) {
-      return res.status(404).json({ error: 'Lyrics not found for this track' });
+      return res.json({ plainLyrics: null, syncedLyrics: [], message: 'No lyrics available for this track' });
     }
 
     return res.json(lyricsData);
   } catch (err) {
     console.error('Lyrics handler error:', err);
-    return res.status(500).json({ error: 'Failed to retrieve lyrics' });
+    return res.json({ plainLyrics: null, syncedLyrics: [], message: 'Failed to retrieve lyrics' });
   }
 }
