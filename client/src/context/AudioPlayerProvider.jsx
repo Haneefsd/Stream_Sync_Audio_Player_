@@ -185,7 +185,18 @@ export const AudioPlayerProvider = ({ children }) => {
               const cur = ytPlayerRef.current.getCurrentTime() || 0;
               const dur = ytPlayerRef.current.getDuration() || 0;
               setCurrentTime(cur);
-              if (dur > 0) setDuration(dur);
+              if (dur > 0) {
+                setDuration(dur);
+                if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+                  try {
+                    navigator.mediaSession.setPositionState({
+                      duration: dur,
+                      playbackRate: playbackRate || 1,
+                      position: Math.min(Math.max(cur, 0), dur)
+                    });
+                  } catch (e) {}
+                }
+              }
             } catch {}
           }
         }, 250);
@@ -202,26 +213,82 @@ export const AudioPlayerProvider = ({ children }) => {
         ytTimeIntervalRef.current = null;
       }
     };
+  }, [isPlaying, playbackRate]);
+
+  // Sync MediaSession playbackState ('playing' | 'paused')
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
   }, [isPlaying]);
 
-  // Sync MediaSession API
+  // Sync MediaSession API metadata & action handlers
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
+      const artUrl = currentTrack.thumbnailUrl || '/pwa-512x512.png';
       navigator.mediaSession.metadata = new window.MediaMetadata({
         title: currentTrack.title || 'Track',
         artist: currentTrack.artist || 'Artist',
-        album: currentTrack.album || 'StreamSync',
+        album: currentTrack.album || 'StreamSync Audio Player',
         artwork: [
-          { src: currentTrack.thumbnailUrl || '/icon.png', sizes: '512x512', type: 'image/jpeg' }
+          { src: artUrl, sizes: '96x96', type: 'image/png' },
+          { src: artUrl, sizes: '128x128', type: 'image/png' },
+          { src: artUrl, sizes: '192x192', type: 'image/png' },
+          { src: artUrl, sizes: '256x256', type: 'image/png' },
+          { src: artUrl, sizes: '384x384', type: 'image/png' },
+          { src: artUrl, sizes: '512x512', type: 'image/png' }
         ]
       });
 
-      navigator.mediaSession.setActionHandler('play', () => togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-      navigator.mediaSession.setActionHandler('previoustrack', () => handlePrevTrack());
-      navigator.mediaSession.setActionHandler('nexttrack', () => handleNextTrack(false));
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
+      const safeSetHandler = (action, handler) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, handler);
+        } catch (err) {}
+      };
+
+      safeSetHandler('play', () => {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === 'function') {
+          try { ytPlayerRef.current.playVideo(); } catch {}
+          setIsPlaying(true);
+        }
+      });
+
+      safeSetHandler('pause', () => {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
+          try { ytPlayerRef.current.pauseVideo(); } catch {}
+          setIsPlaying(false);
+        }
+      });
+
+      safeSetHandler('previoustrack', () => handlePrevTrack());
+      safeSetHandler('nexttrack', () => handleNextTrack(false));
+
+      safeSetHandler('seekto', (details) => {
         if (details.seekTime !== undefined) seekTo(details.seekTime);
+      });
+
+      safeSetHandler('seekbackward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === 'function') {
+          const cur = ytPlayerRef.current.getCurrentTime() || 0;
+          seekTo(Math.max(cur - offset, 0));
+        }
+      });
+
+      safeSetHandler('seekforward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === 'function') {
+          const cur = ytPlayerRef.current.getCurrentTime() || 0;
+          const dur = ytPlayerRef.current.getDuration() || 0;
+          seekTo(Math.min(cur + offset, dur));
+        }
+      });
+
+      safeSetHandler('stop', () => {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
+          try { ytPlayerRef.current.pauseVideo(); } catch {}
+          setIsPlaying(false);
+        }
       });
     }
   }, [currentTrack]);
