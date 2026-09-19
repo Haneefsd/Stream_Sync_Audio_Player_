@@ -207,6 +207,7 @@ export async function getYouTubeTrending(historyQuery = '', limit = 24) {
 
 import { exec } from 'child_process';
 import util from 'util';
+import youtubedl from 'yt-dlp-exec';
 const execPromise = util.promisify(exec);
 
 /**
@@ -215,28 +216,83 @@ const execPromise = util.promisify(exec);
 export async function getAudioStreamUrl(videoId) {
   if (!videoId) throw new Error('Video ID is required');
   const cleanId = videoId.replace('track_', '').replace('youtube_', '');
-  const url = `https://www.youtube.com/watch?v=${cleanId}`;
+  const watchUrl = `https://www.youtube.com/watch?v=${cleanId}`;
 
-  try {
-    const { stdout } = await execPromise(`python -m yt_dlp -g "${url}" -f bestaudio`, { timeout: 10000 });
-    const lines = stdout.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
-    if (lines.length > 0) {
-      return lines[0].trim();
-    }
-  } catch (err) {
-    console.warn('yt-dlp stream extraction error:', err?.message);
+  // Method 1: yt-dlp-exec with player_client overrides (android & tv_embedded bypass cloud IP blocks on Render/AWS)
+  const playerClients = ['android', 'tv_embedded', 'ios', 'mweb'];
+  for (const client of playerClients) {
+    try {
+      const output = await youtubedl(watchUrl, {
+        getUrl: true,
+        format: 'best[ext=m4a]/bestaudio/best',
+        noCheckCertificates: true,
+        noWarnings: true,
+        extractorArgs: `youtube:player_client=${client}`
+      });
+      if (output && typeof output === 'string') {
+        const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
+        if (lines.length > 0) return lines[0].trim();
+      }
+    } catch (err) {}
   }
 
-  // Fallback try ytdl-core
+  // Method 2: Default yt-dlp-exec fallback
   try {
-    const info = await ytdl.getInfo(url);
+    const output = await youtubedl(watchUrl, {
+      getUrl: true,
+      format: 'bestaudio/best',
+      noCheckCertificates: true,
+      noWarnings: true
+    });
+    if (output && typeof output === 'string') {
+      const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
+      if (lines.length > 0) return lines[0].trim();
+    }
+  } catch (err1) {
+    console.warn('yt-dlp-exec default method error:', err1?.message);
+  }
+
+  // Method 3: System Python / yt-dlp execution (tries python3, python, yt-dlp with android client)
+  const pyCmds = [
+    'python3 -m yt_dlp --extractor-args "youtube:player_client=android"',
+    'python -m yt_dlp --extractor-args "youtube:player_client=android"',
+    'yt-dlp --extractor-args "youtube:player_client=android"'
+  ];
+  for (const cmd of pyCmds) {
+    try {
+      const { stdout } = await execPromise(`${cmd} -g "${watchUrl}" -f "bestaudio/best"`, { timeout: 10000 });
+      const lines = stdout.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
+      if (lines.length > 0) return lines[0].trim();
+    } catch (err) {}
+  }
+
+  // Method 4: Public Invidious API instances fallback
+  const invidiousInstances = [
+    'https://inv.tux.pizza/api/v1/videos/',
+    'https://invidious.nerdvpn.de/api/v1/videos/',
+    'https://vid.puffyan.us/api/v1/videos/',
+    'https://yewtu.be/api/v1/videos/'
+  ];
+
+  for (const baseUrl of invidiousInstances) {
+    try {
+      const invRes = await axios.get(`${baseUrl}${cleanId}`, { timeout: 4000 });
+      const adaptiveFormats = invRes.data?.adaptiveFormats || [];
+      const audioFormat = adaptiveFormats.find(f => f.type?.includes('audio') && f.url);
+      if (audioFormat && audioFormat.url) {
+        return audioFormat.url;
+      }
+    } catch (e) {}
+  }
+
+  // Method 5: ytdl-core fallback
+  try {
+    const info = await ytdl.getInfo(watchUrl);
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
     if (audioFormats[0]?.url) {
       return audioFormats[0].url;
     }
-  } catch (err2) {
-    console.warn('ytdl-core fallback error:', err2?.message);
-  }
+  } catch (err3) {}
 
-  throw new Error('Could not retrieve direct audio stream URL');
+  throw new Error('Could not retrieve direct audio stream URL across all fallback providers');
 }
