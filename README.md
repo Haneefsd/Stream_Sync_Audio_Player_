@@ -48,7 +48,7 @@
 * 🔀 **Personalized & Randomized Recommendations:** Deeply aggregates past search queries and listening history, sampling topics in parallel and applying a **Fisher-Yates shuffle** for a fresh mix upon every refresh.
 * 🎤 **Synchronized Timestamped Lyrics:** Auto-scrolling, line-by-line synced lyrics powered by LRCLIB with click-to-seek functionality.
 * 🛡️ **Context-Aware Action Guards:** A global, smart confirmation modal protects all destructive or critical actions (playlist deletion, playlist creation, track removal) with contextual warnings.
-* 📲 **Full Progressive Web App (PWA) Support:** StreamSync is 100% PWA compliant (`vite-plugin-pwa`) with automatic Service Worker offline app shell caching, standalone app window installation for desktop and mobile, custom app icons, and an interactive **Install App** header button (`InstallPwaPrompt.jsx`).
+* 📲 **Full Progressive Web App (PWA) Support & Enhanced Media Session:** StreamSync is 100% PWA compliant (`vite-plugin-pwa`) featuring automatic Service Worker (`virtual:pwa-register`) offline app shell caching, standalone app window installation for desktop and mobile with wide/narrow screenshots, custom 192x192/512x512 maskable app icons, and an interactive **Install App** header button. Integrated with OS-level **MediaSession API**, syncing live scrubbing progress (`setPositionState`), explicit `playbackState` toggling ('playing'/'paused'), high-res artwork, and Android lock screen / Bluetooth hardware controls.
 * 🎨 **Curated Vibrant Theme, Glassmorphism & Hover Micro-Animations:** Deep obsidian theme featuring **Electric Indigo**, **Emerald Green**, **Mint Cyan**, and **Sunset Amber** with dynamic 24px backdrop blurs, 3D hover scale & lift effects, glowing emerald/cyan border highlights, springy button feedback, and a strict **Zero Pink Guarantee**.
 
 ---
@@ -95,7 +95,7 @@
   * The slide-out `QueueDrawer.jsx` clearly lists `Up Next ({upNextList.length} to be played)` and titles the drawer with the exact remaining track count.
 * **Instant Playlist-to-Queue Synchronization:** When adding or removing tracks in the playlist currently being streamed, `storage.js` broadcasts a custom `playlist_updated` event that `AudioPlayerProvider` captures, updating the active queue instantaneously without disrupting audio.
 * **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
-* **MediaSession API Support:** Hooks directly into your operating system's native media notification center. Track artwork, title, artist, seek bars, and play/pause controls function from locked screens, notifications, and Bluetooth headsets.
+* **MediaSession API & Lock Screen Control Sync:** Hooks directly into your operating system's native media notification center. Synchronizes live playback progress bars via `setPositionState`, explicit `playbackState` tracking ('playing' / 'paused'), high-resolution artwork (`/pwa-512x512.png`), and hardware controls (Play, Pause, Next, Previous, Seek Forward, Seek Backward) for Android lock screen, OS notifications, and Bluetooth headsets.
 * **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
 
 ### 2. Dedicated Full-Page Playlist Management

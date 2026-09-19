@@ -1,6 +1,8 @@
 import ytSearch from 'yt-search';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import ytdl from '@distube/ytdl-core';
+import playdl from 'play-dl';
 
 dotenv.config();
 
@@ -201,4 +203,40 @@ export async function getYouTubeTrending(historyQuery = '', limit = 24) {
     sectionTitle,
     tracks: randomizedTracks
   };
+}
+
+import { exec } from 'child_process';
+import util from 'util';
+const execPromise = util.promisify(exec);
+
+/**
+ * Obtain direct audio stream URL for a given videoId
+ */
+export async function getAudioStreamUrl(videoId) {
+  if (!videoId) throw new Error('Video ID is required');
+  const cleanId = videoId.replace('track_', '').replace('youtube_', '');
+  const url = `https://www.youtube.com/watch?v=${cleanId}`;
+
+  try {
+    const { stdout } = await execPromise(`python -m yt_dlp -g "${url}" -f bestaudio`, { timeout: 10000 });
+    const lines = stdout.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
+    if (lines.length > 0) {
+      return lines[0].trim();
+    }
+  } catch (err) {
+    console.warn('yt-dlp stream extraction error:', err?.message);
+  }
+
+  // Fallback try ytdl-core
+  try {
+    const info = await ytdl.getInfo(url);
+    const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    if (audioFormats[0]?.url) {
+      return audioFormats[0].url;
+    }
+  } catch (err2) {
+    console.warn('ytdl-core fallback error:', err2?.message);
+  }
+
+  throw new Error('Could not retrieve direct audio stream URL');
 }
