@@ -56,10 +56,10 @@ export async function audioStreamHandler(req, res) {
 
     streamRes.data.pipe(res);
   } catch (err) {
-    console.error('Stream controller error:', err?.message);
+    console.warn('Stream controller warning:', err?.message);
     if (!res.headersSent) {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.status(500).json({ error: 'Failed to retrieve audio stream' });
+      res.status(404).json({ error: 'Direct audio stream unavailable', fallback: 'youtube', message: err?.message });
     }
   }
 }

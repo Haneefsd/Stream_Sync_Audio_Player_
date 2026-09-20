@@ -212,6 +212,13 @@ export async function getYouTubeTrending(historyQuery = '', limit = 24) {
 
 const streamCache = new Map();
 
+function withTimeout(promise, ms = 4000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Extraction timed out')), ms))
+  ]);
+}
+
 /**
  * Obtain direct audio stream URL for a given videoId with in-memory caching
  */
@@ -230,15 +237,15 @@ export async function getAudioStreamUrl(videoId) {
 
   const watchUrl = `https://www.youtube.com/watch?v=${cleanId}`;
 
-  // 2. Primary Method: yt-dlp-exec with player_client=android (bypasses cloud IP blocks on Render)
+  // 2. Primary Method: yt-dlp-exec with player_client=android (fast 4s timeout)
   try {
-    const output = await youtubedl(watchUrl, {
+    const output = await withTimeout(youtubedl(watchUrl, {
       getUrl: true,
       format: 'ba/b/best',
       noCheckCertificates: true,
       noWarnings: true,
       extractorArgs: 'youtube:player_client=android'
-    });
+    }), 4000);
 
     if (output && typeof output === 'string') {
       const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
@@ -248,19 +255,17 @@ export async function getAudioStreamUrl(videoId) {
         return streamUrl;
       }
     }
-  } catch (err) {
-    console.warn('yt-dlp android method error:', err?.message);
-  }
+  } catch (err) {}
 
   // 3. Fallback Method: yt-dlp-exec with player_client=tv_embedded
   try {
-    const output = await youtubedl(watchUrl, {
+    const output = await withTimeout(youtubedl(watchUrl, {
       getUrl: true,
       format: 'ba/b/best',
       noCheckCertificates: true,
       noWarnings: true,
       extractorArgs: 'youtube:player_client=tv_embedded'
-    });
+    }), 3000);
 
     if (output && typeof output === 'string') {
       const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
@@ -270,38 +275,17 @@ export async function getAudioStreamUrl(videoId) {
         return streamUrl;
       }
     }
-  } catch (err) {
-    console.warn('yt-dlp tv_embedded method error:', err?.message);
-  }
+  } catch (err) {}
 
-  // 4. Fallback Method: System Python / yt-dlp execution
-  const pyCmds = [
-    'python3 -m yt_dlp --extractor-args "youtube:player_client=android"',
-    'python -m yt_dlp --extractor-args "youtube:player_client=android"',
-    'yt-dlp --extractor-args "youtube:player_client=android"'
-  ];
-  for (const cmd of pyCmds) {
-    try {
-      const { stdout } = await execPromise(`${cmd} -g "${watchUrl}" -f "ba/b/best"`, { timeout: 12000 });
-      const lines = stdout.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
-      if (lines.length > 0) {
-        const streamUrl = lines[0].trim();
-        streamCache.set(cleanId, { url: streamUrl, expiresAt: Date.now() + 4 * 3600 * 1000 });
-        return streamUrl;
-      }
-    } catch (err) {}
-  }
-
-  // 5. Fallback Method: Invidious API instances
+  // 4. Fallback Method: Invidious API instances (fast 2s timeout per instance)
   const invidiousInstances = [
     'https://inv.tux.pizza/api/v1/videos/',
     'https://invidious.nerdvpn.de/api/v1/videos/',
-    'https://vid.puffyan.us/api/v1/videos/',
     'https://yewtu.be/api/v1/videos/'
   ];
   for (const baseUrl of invidiousInstances) {
     try {
-      const invRes = await axios.get(`${baseUrl}${cleanId}`, { timeout: 4000 });
+      const invRes = await axios.get(`${baseUrl}${cleanId}`, { timeout: 2000 });
       const adaptiveFormats = invRes.data?.adaptiveFormats || [];
       const audioFormat = adaptiveFormats.find(f => f.type?.includes('audio') && f.url);
       if (audioFormat && audioFormat.url) {
@@ -311,9 +295,9 @@ export async function getAudioStreamUrl(videoId) {
     } catch (e) {}
   }
 
-  // 6. Fallback Method: ytdl-core
+  // 5. Fallback Method: ytdl-core (fast 2.5s timeout)
   try {
-    const info = await ytdl.getInfo(watchUrl);
+    const info = await withTimeout(ytdl.getInfo(watchUrl), 2500);
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
     if (audioFormats[0]?.url) {
       streamCache.set(cleanId, { url: audioFormats[0].url, expiresAt: Date.now() + 2 * 3600 * 1000 });

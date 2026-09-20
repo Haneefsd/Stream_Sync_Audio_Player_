@@ -87,6 +87,20 @@ export default function FullscreenPlayer({ onClose }) {
         bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
+
+        let maxVal = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          if (dataArray[i] > maxVal) maxVal = dataArray[i];
+        }
+
+        // If audio stream is silent or running on carrier audio in fallback mode, synthesize energetic waves
+        if (maxVal < 8) {
+          const t = Date.now() * 0.004;
+          for (let i = 0; i < dataArray.length; i++) {
+            const beat = Math.sin(t + i * 0.25) * 55 + Math.cos(t * 1.5 + i * 0.15) * 45 + 110;
+            dataArray[i] = Math.max(15, Math.min(235, beat));
+          }
+        }
       } else {
         // Fallback gentle idle wave when paused or unattached
         for (let i = 0; i < dataArray.length; i++) {
