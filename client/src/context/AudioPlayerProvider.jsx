@@ -170,6 +170,14 @@ export const AudioPlayerProvider = ({ children }) => {
     lastYtVideoIdRef.current = videoId;
     stopYtProgressLoop();
 
+    // Show YouTube player container when fallback is active
+    const ytContainer = document.getElementById('streamsync-yt-player-container');
+    if (ytContainer) {
+      ytContainer.style.opacity = '1';
+      ytContainer.style.pointerEvents = 'auto';
+      ytContainer.style.transform = 'scale(1)';
+    }
+
     // Reset native audio stream and play silent carrier loop for mobile Chrome background focus & lockscreen
     if (audioRef.current) {
       try {
@@ -207,30 +215,43 @@ export const AudioPlayerProvider = ({ children }) => {
     const initYTPlayer = () => {
       if (ytPlayerRef.current || !window.YT) return;
       try {
-        let ytDiv = document.getElementById('streamsync-yt-player');
-        if (!ytDiv) {
-          ytDiv = document.createElement('div');
+        let container = document.getElementById('streamsync-yt-player-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'streamsync-yt-player-container';
+          container.style.position = 'fixed';
+          container.style.bottom = '88px';
+          container.style.right = '16px';
+          container.style.width = '240px';
+          container.style.height = '135px';
+          container.style.zIndex = '45';
+          container.style.borderRadius = '12px';
+          container.style.overflow = 'hidden';
+          container.style.boxShadow = '0 10px 25px rgba(0,0,0,0.6)';
+          container.style.border = '1px solid rgba(255,255,255,0.15)';
+          container.style.background = '#07090e';
+          container.style.opacity = '0';
+          container.style.pointerEvents = 'none';
+          container.style.transform = 'scale(0.8)';
+          container.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+          const ytDiv = document.createElement('div');
           ytDiv.id = 'streamsync-yt-player';
-          ytDiv.style.position = 'fixed';
-          ytDiv.style.bottom = '-9999px';
-          ytDiv.style.left = '-9999px';
-          ytDiv.style.width = '1px';
-          ytDiv.style.height = '1px';
-          ytDiv.style.opacity = '0';
-          ytDiv.style.pointerEvents = 'none';
-          document.body.appendChild(ytDiv);
+          container.appendChild(ytDiv);
+          document.body.appendChild(container);
         }
 
         ytPlayerRef.current = new window.YT.Player('streamsync-yt-player', {
-          height: '1',
-          width: '1',
+          height: '100%',
+          width: '100%',
           playerVars: {
-            autoplay: 0,
-            controls: 0,
-            disablekb: 1,
+            autoplay: 1,
+            controls: 1,
+            disablekb: 0,
             fs: 0,
             modestbranding: 1,
             playsinline: 1,
+            enablejsapi: 1,
             origin: window.location.origin
           },
           events: {
@@ -569,6 +590,15 @@ export const AudioPlayerProvider = ({ children }) => {
     const audio = audioRef.current;
     if (audio) {
       playbackEngineRef.current = 'native';
+      const ytContainer = document.getElementById('streamsync-yt-player-container');
+      if (ytContainer) {
+        ytContainer.style.opacity = '0';
+        ytContainer.style.pointerEvents = 'none';
+        ytContainer.style.transform = 'scale(0.8)';
+      }
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
+        try { ytPlayerRef.current.pauseVideo(); } catch {}
+      }
       audio.loop = false;
       audio.src = streamUrl;
       audio.playbackRate = playbackRate || 1;

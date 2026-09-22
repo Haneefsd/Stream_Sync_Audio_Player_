@@ -237,7 +237,7 @@ export async function getAudioStreamUrl(videoId) {
 
   const watchUrl = `https://www.youtube.com/watch?v=${cleanId}`;
 
-  // 2. Primary Method: yt-dlp-exec with player_client=android (fast 4s timeout)
+  // 2. Primary Method: yt-dlp-exec with player_client=android (reliable 12s timeout for cloud environments)
   try {
     const output = await withTimeout(youtubedl(watchUrl, {
       getUrl: true,
@@ -245,7 +245,7 @@ export async function getAudioStreamUrl(videoId) {
       noCheckCertificates: true,
       noWarnings: true,
       extractorArgs: 'youtube:player_client=android'
-    }), 4000);
+    }), 12000);
 
     if (output && typeof output === 'string') {
       const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));
@@ -257,7 +257,7 @@ export async function getAudioStreamUrl(videoId) {
     }
   } catch (err) {}
 
-  // 3. Fallback Method: yt-dlp-exec with player_client=tv_embedded
+  // 3. Fallback Method: yt-dlp-exec with player_client=tv_embedded (8s timeout)
   try {
     const output = await withTimeout(youtubedl(watchUrl, {
       getUrl: true,
@@ -265,7 +265,7 @@ export async function getAudioStreamUrl(videoId) {
       noCheckCertificates: true,
       noWarnings: true,
       extractorArgs: 'youtube:player_client=tv_embedded'
-    }), 3000);
+    }), 8000);
 
     if (output && typeof output === 'string') {
       const lines = output.trim().split(/\r?\n/).filter(l => l.startsWith('http'));

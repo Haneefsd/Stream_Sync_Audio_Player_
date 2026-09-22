@@ -12,8 +12,10 @@ node_modules/
 # Production Build Artifacts
 dist/
 build/
+dev-dist/
 **/dist/
 **/build/
+**/dev-dist/
 
 # Logs & Temp Files
 *.log
