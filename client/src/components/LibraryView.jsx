@@ -12,7 +12,8 @@ import {
   Music,
   Image,
   Upload,
-  GripVertical
+  GripVertical,
+  Clock
 } from 'lucide-react';
 
 export default function LibraryView({ onSelectPlaylist }) {
@@ -20,7 +21,8 @@ export default function LibraryView({ onSelectPlaylist }) {
   const { requestConfirmation } = useConfirmation();
   const [favorites, setFavorites] = useState(storageService.getFavorites());
   const [playlists, setPlaylists] = useState(storageService.getPlaylists());
-  const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'playlists' | 'liked'
+  const [history, setHistory] = useState(storageService.getHistory());
+  const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all' | 'playlists' | 'recent'
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistCoverUrl, setNewPlaylistCoverUrl] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -28,13 +30,18 @@ export default function LibraryView({ onSelectPlaylist }) {
   const [dragOverPlaylistIndex, setDragOverPlaylistIndex] = useState(null);
 
   useEffect(() => {
-    const syncPlaylists = () => {
+    const syncLibrary = () => {
       setFavorites(storageService.getFavorites());
       setPlaylists(storageService.getPlaylists());
+      setHistory(storageService.getHistory());
     };
-    syncPlaylists();
-    window.addEventListener('playlistsUpdated', syncPlaylists);
-    return () => window.removeEventListener('playlistsUpdated', syncPlaylists);
+    syncLibrary();
+    window.addEventListener('playlistsUpdated', syncLibrary);
+    window.addEventListener('historyUpdated', syncLibrary);
+    return () => {
+      window.removeEventListener('playlistsUpdated', syncLibrary);
+      window.removeEventListener('historyUpdated', syncLibrary);
+    };
   }, []);
 
   const handleDragStartPlaylist = (e, index) => {
@@ -159,17 +166,17 @@ export default function LibraryView({ onSelectPlaylist }) {
               Playlists ({playlists.length})
             </button>
             <button
-              onClick={() => setActiveTabFilter('liked')}
+              onClick={() => setActiveTabFilter('recent')}
               style={{
                 padding: '0.45rem 1rem',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.82rem',
-                fontWeight: activeTabFilter === 'liked' ? 700 : 500,
-                background: activeTabFilter === 'liked' ? 'var(--accent-indigo)' : 'transparent',
-                color: activeTabFilter === 'liked' ? '#fff' : 'var(--text-secondary)'
+                fontWeight: activeTabFilter === 'recent' ? 700 : 500,
+                background: activeTabFilter === 'recent' ? 'var(--accent-cyan)' : 'transparent',
+                color: activeTabFilter === 'recent' ? '#000' : 'var(--text-secondary)'
               }}
             >
-              Liked ({favorites.length})
+              Recently Played ({history.length})
             </button>
           </div>
 
@@ -385,40 +392,88 @@ export default function LibraryView({ onSelectPlaylist }) {
         </div>
       )}
 
-      {/* 2. LIKED SONGS LIST PREVIEW SECTION */}
-      {(activeTabFilter === 'all' || activeTabFilter === 'liked') && (
+      {/* 2. RECENTLY PLAYED SONGS LIST SECTION */}
+      {(activeTabFilter === 'all' || activeTabFilter === 'recent') && (
         <div style={{ marginBottom: '3rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Heart size={20} color="var(--accent-indigo)" fill="var(--accent-indigo)" />
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700 }}>Liked Songs List</h2>
+              <Clock size={20} color="var(--accent-cyan)" />
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 700 }}>Recently Played Songs</h2>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                ({history.length})
+              </span>
             </div>
 
-            {favorites.length > 0 && (
-              <button
-                onClick={() => setActiveTab('favorites')}
-                style={{
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  color: 'var(--accent-indigo)',
-                  cursor: 'pointer'
-                }}
-              >
-                View Full Liked Panel →
-              </button>
+            {history.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  onClick={() => playTrack(history[0], history)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'rgba(6, 182, 212, 0.15)',
+                    color: 'var(--accent-cyan)',
+                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                    cursor: 'pointer'
+                  }}
+                  title="Play Recently Played Songs"
+                >
+                  <Play size={14} fill="currentColor" />
+                  <span>Play Recent</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    requestConfirmation({
+                      title: 'Clear History',
+                      message: 'Are you sure you want to clear your recently played tracks? This cannot be undone.',
+                      confirmText: 'Clear',
+                      cancelText: 'Cancel',
+                      actionType: 'delete',
+                      onConfirm: () => {
+                        storageService.clearHistory();
+                        setHistory([]);
+                      }
+                    });
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0.3rem 0.6rem',
+                    borderRadius: 'var(--radius-sm)'
+                  }}
+                  title="Clear Listening History"
+                >
+                  <Trash2 size={14} />
+                  <span>Clear</span>
+                </button>
+              </div>
             )}
           </div>
 
-          {favorites.length > 0 ? (
+          {history.length > 0 ? (
             <div className="track-list glass-panel" style={{ padding: '0.75rem' }}>
-              {favorites.slice(0, 10).map((track, i) => (
-                <TrackRow key={track.id} track={track} index={i} trackList={favorites} />
+              {history.slice(0, 20).map((track, i) => (
+                <TrackRow key={`${track.id}_${i}`} track={track} index={i} trackList={history} />
               ))}
             </div>
           ) : (
             <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Heart size={30} color="var(--accent-indigo)" style={{ margin: '0 auto 0.75rem' }} />
-              <p style={{ fontSize: '0.9rem' }}>No liked songs saved yet. Click the heart icon on any song to save it!</p>
+              <Clock size={30} color="var(--accent-cyan)" style={{ margin: '0 auto 0.75rem', opacity: 0.8 }} />
+              <p style={{ fontSize: '0.9rem', marginBottom: '0.35rem' }}>No recently played songs yet.</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Play any song to start building your personal listening history!</p>
             </div>
           )}
         </div>

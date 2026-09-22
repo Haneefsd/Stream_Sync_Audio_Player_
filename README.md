@@ -11,7 +11,7 @@
 2. [System Architecture & Data Flow](#-system-architecture--data-flow)
 3. [Deep-Dive Feature Breakdown](#-deep-dive-feature-breakdown)
    - [Seamless Audio Playback Engine & Queue Management](#1-seamless-audio-playback-engine--queue-management)
-   - [Dedicated Full-Page Playlist Management](#2-dedicated-full-page-playlist-management)
+   - [Dedicated Full-Page Playlist Management & Library Hub](#2-dedicated-full-page-playlist-management--library-hub)
    - [Dedicated Liked Songs Hub](#3-dedicated-liked-songs-hub)
    - [Advanced Search & History Engine](#4-advanced-search--history-engine)
    - [Smart Recommendation & Dynamic Trending Mix](#5-smart-recommendation--dynamic-trending-mix)
@@ -35,6 +35,7 @@
 * ⚡ **Instant Client-Side Streaming:** Powered by an embedded headless player engine that bypasses proxy bottlenecks, eliminates CORS errors, and supports hardware-accelerated playback.
 * 🎛️ **Hold & Drag Real-Time Seek Bar Scrubbing:** Users can click/touch and hold the seek bar thumb to continuously drag forward and backward across playback timestamps in real-time in both `PlayerBar.jsx` and `FullscreenPlayer.jsx`.
 * 🖐️ **Clean Drag & Drop Song & Playlist Reordering:** Hold and drag tracks or custom playlists to any desired position using dedicated drag grip handles (`GripVertical`) and HTML5 drag-and-drop, featuring a clean 5-column layout without up/down arrow clutter in `LibraryView.jsx`, `PlaylistView.jsx`, and `TrackRow.jsx`.
+* 📚 **Your Library & Recently Played Songs Display:** The Library hub (`LibraryView.jsx`) organizes your entire collection with real-time filter pills (*All*, *Playlists*, *Recently Played*), custom playlist grid cards, a vibrant Liked Songs hero card leading to the dedicated favorites hub, and displays the **Recently Played Songs** list at the bottom with one-click **Play Recent**, interactive `TrackRow` controls, real-time history updates (`historyUpdated` event), and a guarded **Clear** history action (replacing the previous bottom liked songs preview).
 * 📌 **Seamless Desktop Sidebar & Locked Header:** In desktop mode, the sidebar (`Sidebar.jsx`) extends to fill 100% of the container height without bottom black gaps, featuring a seamless sticky Playlists section header (`var(--bg-surface)`) and custom slim scrollbars. The search bar sits on the complete left of the header bar, with locked panel heights across views.
 * 📱 **Smart Player Bar & Responsive Layout:** The player bar (`PlayerBar.jsx`) remains active whenever a track is loaded (whether playing or paused). On both desktop web view and mobile responsive mode, the playbar automatically hides when no track is selected (`!currentTrack`). In mobile view (`<= 768px`), the mini playbar features a real-time 2.5px progress indicator line (`.player-bar-mobile-progress`) at the top edge synced directly with visualizer slider progress, docks 100% flush with 0px empty space gap directly on top of the bottom navigation bar (`.mobile-bottom-nav`), automatically hides whenever the full-screen visualizer is open, and opens the visualizer when tapped anywhere.
 * 🔽 **Auto-Minimizing Visualizer on Bottom Actions:** When the visualizer or lyrics view is open in mobile mode, tapping any bottom navigation button automatically minimizes the visualizer and switches to the destination view.
@@ -101,8 +102,13 @@
 * **Dynamic Visualizer Wave Synthesis:** `FullscreenPlayer.jsx` automatically synthesizes smooth, reactive frequency spectrum waves so that the circular visualizer, bars, and waves remain rhythmic, lively, and responsive throughout playback.
 * **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
 
-### 2. Dedicated Full-Page Playlist Management
-* **Dedicated Standalone Views (`PlaylistView.jsx`):** Instead of popup dialogs, selecting a playlist opens a dedicated full-page experience with hero artwork, stats (track count, total duration, creation date), and an action bar.
+### 2. Dedicated Full-Page Playlist Management & Library Hub
+* **Unified Library Hub (`LibraryView.jsx`):**
+  * **Filter Pills:** Quickly toggle between `All`, `Playlists ({count})`, and `Recently Played ({count})` with sleek, rounded filter chips.
+  * **Liked Songs Hero Card:** A vibrant Electric Indigo gradient hero banner displaying your favorited tracks count. Clicking anywhere opens the dedicated Liked Songs hub, or click the overlay play button to immediately stream all liked songs.
+  * **Playlist Grid & Drag-and-Drop:** Custom playlists with photo upload preview, 1st-song fallback art, track counts, one-click play buttons, and HTML5 drag reordering.
+  * **Recently Played Songs List (Bottom):** Directly replaces the old bottom liked songs preview. Displays your latest played tracks (up to 20) with interactive `TrackRow` components, instant one-click **Play Recent** action, real-time history event updates (`historyUpdated`), and a guarded **Clear** history button with confirmation dialog.
+* **Dedicated Standalone Playlist Views (`PlaylistView.jsx`):** Instead of popup dialogs, selecting a playlist opens a dedicated full-page experience with hero artwork, stats (track count, total duration, creation date), and an action bar.
 * **Custom Artwork Management:**
   * **Device Upload:** Select image files from your computer; they are instantly encoded as base64 data URLs via `FileReader` and saved to `localStorage`.
   * **Direct Image Link:** Paste any HTTP/HTTPS image URL.

@@ -198,10 +198,12 @@ export const storageService = {
     // Keep max 50 recent tracks
     history = history.slice(0, 50);
     localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('historyUpdated'));
   },
 
   clearHistory: () => {
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('historyUpdated'));
   },
 
   // --- Search History ---
