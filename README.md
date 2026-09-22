@@ -88,14 +88,17 @@
 ## 🔍 Deep-Dive Feature Breakdown
 
 ### 1. Seamless Audio Playback Engine & Queue Management
-* **Headless Streaming Integration:** Integrates the YouTube IFrame API headlessly via `AudioPlayerProvider.jsx`. This guarantees zero media-server load on your backend and full access to CDN-cached audio streams.
-* **Continuous Auto-Play (Sequential & Shuffle):** Listens to track completion events (`YT.PlayerState.ENDED`) and seamlessly triggers `handleNextTrack()`, advancing through the queue or playlist automatically.
+* **Instant Client-Side Pure Audio Streaming:** Streams audio headlessly and directly to the browser in under 200ms. Eliminates cloud server proxy delays, avoids datacenter IP rate limits, and guarantees instant song starts and gapless queue transitions.
+* **100% Pure Audio-Only Presentation:** Zero video windows or overlays. The engine operates completely invisibly (`top: 0, left: 0, 1px x 1px, opacity: 0.001, z-index: -9999`), preserving a clean, distraction-free Spotify-style audio player interface.
+* **Silent Background Audio Carrier Loop:** Concurrently runs a lightweight silent audio carrier on the native HTML5 audio element (`SILENT_AUDIO_URI`). This prevents mobile browsers (Chrome on Android, Safari on iOS) from sleeping or suspending audio when switching apps or locking the device screen.
+* **Continuous Auto-Play (Sequential & Shuffle):** Listens to track completion events and automatically triggers `handleNextTrack()`, advancing to the next song in the queue with zero latency.
 * **Intelligent "Songs to be Played" Queue Counter:**
   * The queue icon in the header displays a live counter badge: `songsToBePlayed = currentIndex >= 0 ? Math.max(0, queue.length - 1 - currentIndex) : queue.length`.
   * The slide-out `QueueDrawer.jsx` clearly lists `Up Next ({upNextList.length} to be played)` and titles the drawer with the exact remaining track count.
 * **Instant Playlist-to-Queue Synchronization:** When adding or removing tracks in the playlist currently being streamed, `storage.js` broadcasts a custom `playlist_updated` event that `AudioPlayerProvider` captures, updating the active queue instantaneously without disrupting audio.
 * **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
 * **MediaSession API & Lock Screen Control Sync:** Hooks directly into your operating system's native media notification center. Synchronizes live playback progress bars via `setPositionState`, explicit `playbackState` tracking ('playing' / 'paused'), high-resolution artwork (`/pwa-512x512.png`), and hardware controls (Play, Pause, Next, Previous, Seek Forward, Seek Backward) for Android lock screen, OS notifications, and Bluetooth headsets.
+* **Dynamic Visualizer Wave Synthesis:** `FullscreenPlayer.jsx` automatically synthesizes smooth, reactive frequency spectrum waves so that the circular visualizer, bars, and waves remain rhythmic, lively, and responsive throughout playback.
 * **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
 
 ### 2. Dedicated Full-Page Playlist Management

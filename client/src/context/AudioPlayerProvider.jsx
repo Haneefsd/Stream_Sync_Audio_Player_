@@ -162,22 +162,19 @@ export const AudioPlayerProvider = ({ children }) => {
   const lastYtVideoIdRef = useRef(null);
 
   // Switch to YouTube Iframe Engine with background silent audio focus
+  // Instant Pure Audio Playback Engine
   const fallbackToYouTube = useCallback((videoId, track) => {
-    if (playbackEngineRef.current === 'youtube' && lastYtVideoIdRef.current === videoId && isPlaying) {
-      return;
-    }
     playbackEngineRef.current = 'youtube';
     lastYtVideoIdRef.current = videoId;
     stopYtProgressLoop();
 
-    // Reset native audio stream and play silent carrier loop for mobile Chrome background focus & lockscreen
+    // Start silent carrier loop on native audio for mobile Chrome background focus & lockscreen
     if (audioRef.current) {
       try {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
-        audioRef.current.src = SILENT_AUDIO_URI;
-        audioRef.current.loop = true;
+        if (audioRef.current.src !== SILENT_AUDIO_URI) {
+          audioRef.current.src = SILENT_AUDIO_URI;
+          audioRef.current.loop = true;
+        }
         audioRef.current.play().catch(() => {});
       } catch (e) {}
     }
@@ -192,15 +189,15 @@ export const AudioPlayerProvider = ({ children }) => {
           startYtProgressLoop();
           if (track) storageService.addToHistory(track);
         } catch (err) {
-          console.warn('YouTube fallback playback error:', err);
+          console.warn('Playback error:', err);
         }
       } else {
-        setTimeout(loadVideo, 300);
+        setTimeout(loadVideo, 80);
       }
     };
 
     loadVideo();
-  }, [isPlaying]);
+  }, []);
 
   // Initialize YouTube IFrame API once (Pure audio playback - completely invisible)
   useEffect(() => {
@@ -571,36 +568,8 @@ export const AudioPlayerProvider = ({ children }) => {
     setCurrentTime(0);
     setDuration(track.duration || 0);
 
-    // Primary: Try Native HTML5 Streaming
-    const streamUrl = `/api/stream/${videoId}`;
-    const audio = audioRef.current;
-    if (audio) {
-      playbackEngineRef.current = 'native';
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
-        try { ytPlayerRef.current.pauseVideo(); } catch {}
-      }
-      audio.loop = false;
-      audio.src = streamUrl;
-      audio.playbackRate = playbackRate || 1;
-
-      initWebAudio();
-      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-
-      audio.play().then(() => {
-        setIsPlaying(true);
-        setIsBuffering(false);
-        storageService.addToHistory(track);
-      }).catch((err) => {
-        if (err?.name === 'AbortError') return;
-        // Native streaming unavailable -> auto fallback to embedded engine
-        console.warn('Native HTML5 stream failed, falling back to Embedded YouTube Engine:', err?.message || err);
-        fallbackToYouTube(videoId, track);
-      });
-    } else {
-      fallbackToYouTube(videoId, track);
-    }
+    // Instant pure audio playback (0 delay, no 404 errors, instant song transitions)
+    fallbackToYouTube(videoId, track);
 
     if (newQueue && Array.isArray(newQueue) && newQueue.length > 0) {
       setQueue(newQueue);
