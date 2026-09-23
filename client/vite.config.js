@@ -12,7 +12,7 @@ export default defineConfig({
         enabled: true,
         suppressWarnings: true
       },
-      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-icon-512x512.png'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-icon-512x512.png', 'favicon.ico'],
       manifest: {
         id: '/',
         name: 'StreamSync Audio Player',
