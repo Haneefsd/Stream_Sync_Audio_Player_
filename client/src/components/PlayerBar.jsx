@@ -40,7 +40,9 @@ export default function PlayerBar() {
     toggleShuffle,
     isFullscreenPlayerOpen,
     setIsFullscreenPlayerOpen,
-    setIsQueueOpen
+    setIsQueueOpen,
+    showRemainingTime,
+    toggleRemainingTime
   } = useAudioPlayer();
 
   const [isLiked, setIsLiked] = useState(false);
@@ -353,8 +355,25 @@ export default function PlayerBar() {
                 ></div>
               </div>
 
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', width: '35px' }}>
-                {formatTime(duration)}
+              <span
+                className="seek-time-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleRemainingTime();
+                }}
+                style={{
+                  fontSize: '0.72rem',
+                  color: showRemainingTime ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                  minWidth: '40px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontWeight: showRemainingTime ? 600 : 400,
+                  transition: 'color 0.15s ease'
+                }}
+                title={showRemainingTime ? "Remaining time left (Click to display total duration)" : "Total song duration (Click to display remaining time left)"}
+              >
+                {showRemainingTime ? `-${formatTime(Math.max(0, (duration || 0) - displayTime))}` : formatTime(duration)}
               </span>
             </div>
           );

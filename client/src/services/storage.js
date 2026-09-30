@@ -323,14 +323,16 @@ export const storageService = {
         preferredQuality: '320kbps',
         volume: 0.8,
         repeatMode: 'off', // 'off' | 'all' | 'one'
-        shuffle: false
+        shuffle: false,
+        showRemainingTime: false
       };
     } catch {
       return {
         preferredQuality: '320kbps',
         volume: 0.8,
         repeatMode: 'off',
-        shuffle: false
+        shuffle: false,
+        showRemainingTime: false
       };
     }
   },

@@ -101,7 +101,8 @@
   * **One-Click Clear Queue Action:** `QueueDrawer.jsx` features dedicated Clear buttons in both the drawer header and directly next to the "Up Next" title to purge all upcoming songs while keeping current track playback seamless.
   * The slide-out `QueueDrawer.jsx` clearly lists `Up Next ({upNextList.length} to be played)` and titles the drawer with the exact remaining track count.
 * **Instant Playlist-to-Queue Synchronization:** When adding or removing tracks in the playlist currently being streamed, `storage.js` broadcasts a custom `playlist_updated` event that `AudioPlayerProvider` captures, updating the active queue instantaneously without disrupting audio.
-* **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
+* **Persistent Settings:** Volume levels, preferred quality, shuffle toggle, remaining time toggle preference, and 3-state repeat modes (`off`, `all`, `one`) are saved to `localStorage` and restored across browser sessions.
+* **Interactive Remaining Time Left Toggle (Visualizer & Player Bar):** In both `FullscreenPlayer.jsx` (Visualizer / Lyrics) and `PlayerBar.jsx`, clicking the total track duration timestamp (e.g. `5:12`) toggles the display to the dynamic remaining countdown time left to complete the song (e.g. `-4:39`). Clicking it again switches back to total duration, with smooth hover transitions, clear tooltips, and state synchronization across the app.
 * **MediaSession API & Lock Screen Control Sync:** Hooks directly into your operating system's native media notification center. Synchronizes live playback progress bars via `setPositionState`, explicit `playbackState` tracking ('playing' / 'paused'), high-resolution artwork (`/pwa-512x512.png`), and hardware controls (Play, Pause, Next, Previous, Seek Forward, Seek Backward) for Android lock screen, OS notifications, and Bluetooth headsets.
 * **Dynamic Visualizer Wave Synthesis:** `FullscreenPlayer.jsx` automatically synthesizes smooth, reactive frequency spectrum waves so that the circular visualizer, bars, and waves remain rhythmic, lively, and responsive throughout playback.
 * **Non-Stop Logo Page Refresh:** Clicking the StreamSync brand logo triggers `refreshPage()`. It increments `pageRefreshKey`, resets modals, closes drawers, clears search filters, and loads fresh recommendations without interrupting `currentTrack` or pausing audio playback.
@@ -164,18 +165,20 @@
 * **Context-Guarded Playlist Creation:** Tapping the **Create** tab on the bottom bar triggers a confirmation modal to name and create a new playlist with one tap.
 
 ### 8. Curated Vibrant Theme, Glassmorphism & Hover Micro-Animations
-* **Modern Palette:** Built using curated colors tailored for high visual appeal:
-  * **Electric Indigo:** `#6366f1` / `#4f46e5` (Liked Songs hero, active state highlights)
-  * **Emerald Green:** `#10b981` (Primary accents, play buttons, sliders)
-  * **Mint Cyan:** `#06b6d4` (Active lyrics, secondary highlights)
-  * **Sunset Amber:** `#f59e0b` (Badges, warnings, secondary chips)
-  * **Deep Obsidian Surface:** `#07090e` / `#0e131f` (Glassmorphic dark backgrounds)
-* **Hover Effects & Micro-Animations:**
-  * **Track Cards (`.track-card`):** 3D card lift (`translateY(-7px) scale(1.015)`), image scale glow, and play icon slide-up animation.
+* **High-Level Design System & Modern Palette:** Built using curated colors tailored for high visual luxury and depth:
+  * **Electric Indigo:** `#6366f1` / `#4f46e5` (Liked Songs hero banner, favorites active states)
+  * **Emerald Green:** `#10b981` (Primary branding, play buttons, active indicators, seek bars)
+  * **Mint Cyan:** `#06b6d4` (Active lyrics, secondary highlights, gradient waveforms)
+  * **Sunset Amber & Coral:** `#f59e0b` / `#f97316` (Badges, warnings, secondary chips)
+  * **Layered Deep Obsidian:** `#06080d` / `#0c101a` / `#131927` with multi-point radial ambient haze mesh
+* **Elevated Specular Glassmorphism & Micro-Animations:**
+  * **Specular Border Highlights:** Panels and cards feature subtle inset rim lighting (`box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12)`), creating rich Apple/Linear-grade glass depth.
+  * **Spring Physics Motion:** Smooth, tactile state transitions using `--ease-spring` (`cubic-bezier(0.16, 1, 0.3, 1)`) and springy click responses (`active: scale(0.96)`).
+  * **Track Cards (`.track-card`):** 3D card lift (`translateY(-7px) scale(1.018)`), image scale glow, and play icon spring slide-up.
   * **Track Rows (`.track-row`):** Smooth horizontal slide (`translateX(4px)`), gradient hover backgrounds, and interactive icon button scaling.
-  * **Sidebar Navigation:** Slide hover transition (`translateX(5px)`), glass highlight, and active emerald pill glow shadow.
-  * **Seek Bar Scrubbing:** Thumb expansion (`scale(1.25)`) with an emerald halo glow (`0 0 14px var(--accent-emerald)`).
-  * **Hero Banner:** Ambient floating background orb animation (`@keyframes floatOrb`) and subtle glowing border feedback.
+  * **Sidebar Navigation:** Slide hover transition (`translateX(4px)`), glass highlight, and active emerald pill glow shadow.
+  * **Seek Bar Scrubbing:** Thumb expansion (`scale(1.25)`) with an emerald halo glow (`0 0 16px var(--accent-emerald)`).
+  * **Hero Banner:** Dual counter-floating atmospheric background ambient glow orbs (`@keyframes floatOrb`) and glowing border feedback.
 * **Zero Pink Guarantee:** Completely free of pink or magenta tones throughout all components, SVGs, and stylesheets.
 
 ---

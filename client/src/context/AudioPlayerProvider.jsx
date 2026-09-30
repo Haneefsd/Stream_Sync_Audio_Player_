@@ -34,6 +34,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode || 'off'); // 'off' | 'all' | 'one'
   const [shuffle, setShuffle] = useState(initialSettings.shuffle || false);
+  const [showRemainingTime, setShowRemainingTime] = useState(initialSettings.showRemainingTime || false);
   const [currentPlaylistId, setCurrentPlaylistId] = useState(null);
   const currentPlaylistIdRef = useRef(null);
   useEffect(() => { currentPlaylistIdRef.current = currentPlaylistId; }, [currentPlaylistId]);
@@ -667,6 +668,15 @@ export const AudioPlayerProvider = ({ children }) => {
     storageService.saveSettings({ shuffle: next });
   };
 
+  // Toggle Remaining Time display vs total duration
+  const toggleRemainingTime = () => {
+    setShowRemainingTime(prev => {
+      const next = !prev;
+      storageService.saveSettings({ showRemainingTime: next });
+      return next;
+    });
+  };
+
   // Queue Operations
   const addToQueue = (track) => {
     setQueue(prev => {
@@ -734,6 +744,8 @@ export const AudioPlayerProvider = ({ children }) => {
         currentIndex,
         repeatMode,
         shuffle,
+        showRemainingTime,
+        toggleRemainingTime,
         analyserRef,
         isFullscreenPlayerOpen,
         isQueueOpen,
