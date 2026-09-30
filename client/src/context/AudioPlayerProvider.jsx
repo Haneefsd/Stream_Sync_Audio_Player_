@@ -76,7 +76,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
       audioContextRef.current = ctx;
       analyserRef.current = analyser;
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const queueRef = useRef(queue);
@@ -142,10 +142,10 @@ export const AudioPlayerProvider = ({ children }) => {
                   playbackRate: 1,
                   position: Math.min(Math.max(cur, 0), dur)
                 });
-              } catch (e) {}
+              } catch (e) { }
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }, 250);
   };
@@ -175,8 +175,8 @@ export const AudioPlayerProvider = ({ children }) => {
           audioRef.current.src = SILENT_AUDIO_URI;
           audioRef.current.loop = true;
         }
-        audioRef.current.play().catch(() => {});
-      } catch (e) {}
+        audioRef.current.play().catch(() => { });
+      } catch (e) { }
     }
 
     const loadVideo = () => {
@@ -274,7 +274,7 @@ export const AudioPlayerProvider = ({ children }) => {
             }
           }
         });
-      } catch (err) {}
+      } catch (err) { }
     };
 
     if (window.YT && window.YT.Player) {
@@ -336,7 +336,7 @@ export const AudioPlayerProvider = ({ children }) => {
                 playbackRate: audio.playbackRate || 1,
                 position: Math.min(Math.max(cur, 0), dur)
               });
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       }
@@ -402,9 +402,9 @@ export const AudioPlayerProvider = ({ children }) => {
     setCurrentTime(clamped);
 
     if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === 'function') {
-      try { ytPlayerRef.current.seekTo(clamped, true); } catch {}
+      try { ytPlayerRef.current.seekTo(clamped, true); } catch { }
     } else if (audioRef.current) {
-      try { audioRef.current.currentTime = clamped; } catch {}
+      try { audioRef.current.currentTime = clamped; } catch { }
     }
   };
 
@@ -420,7 +420,7 @@ export const AudioPlayerProvider = ({ children }) => {
       if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current && typeof ytPlayerRef.current.playVideo === 'function') {
         ytPlayerRef.current.playVideo();
       } else if (audioRef.current) {
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
       }
       return;
     }
@@ -487,22 +487,22 @@ export const AudioPlayerProvider = ({ children }) => {
       const safeSetHandler = (action, handler) => {
         try {
           navigator.mediaSession.setActionHandler(action, handler);
-        } catch (err) {}
+        } catch (err) { }
       };
 
       safeSetHandler('play', () => {
         if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current) {
-          try { ytPlayerRef.current.playVideo(); } catch {}
-          if (audioRef.current) audioRef.current.play().catch(() => {});
+          try { ytPlayerRef.current.playVideo(); } catch { }
+          if (audioRef.current) audioRef.current.play().catch(() => { });
           setIsPlaying(true);
         } else if (audioRef.current) {
-          audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+          audioRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
         }
       });
 
       safeSetHandler('pause', () => {
         if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current) {
-          try { ytPlayerRef.current.pauseVideo(); } catch {}
+          try { ytPlayerRef.current.pauseVideo(); } catch { }
           if (audioRef.current) audioRef.current.pause();
           setIsPlaying(false);
         } else if (audioRef.current) {
@@ -531,7 +531,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
       safeSetHandler('stop', () => {
         if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current) {
-          try { ytPlayerRef.current.pauseVideo(); } catch {}
+          try { ytPlayerRef.current.pauseVideo(); } catch { }
         }
         if (audioRef.current) {
           audioRef.current.pause();
@@ -551,7 +551,7 @@ export const AudioPlayerProvider = ({ children }) => {
       setCurrentPlaylistId(playlistId);
     } else if (newQueue && Array.isArray(newQueue) && newQueue.length > 0) {
       const allPlaylists = storageService.getPlaylists();
-      const matched = allPlaylists.find(p => 
+      const matched = allPlaylists.find(p =>
         p.tracks && p.tracks.length > 0 &&
         p.tracks.length === newQueue.length &&
         p.tracks[0]?.id === newQueue[0]?.id &&
@@ -595,12 +595,12 @@ export const AudioPlayerProvider = ({ children }) => {
 
     if (playbackEngineRef.current === 'youtube' && ytPlayerRef.current) {
       if (isPlaying) {
-        try { ytPlayerRef.current.pauseVideo(); } catch {}
+        try { ytPlayerRef.current.pauseVideo(); } catch { }
         if (audioRef.current) audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        try { ytPlayerRef.current.playVideo(); } catch {}
-        if (audioRef.current) audioRef.current.play().catch(() => {});
+        try { ytPlayerRef.current.playVideo(); } catch { }
+        if (audioRef.current) audioRef.current.play().catch(() => { });
         setIsPlaying(true);
       }
     } else if (audioRef.current) {
@@ -611,7 +611,7 @@ export const AudioPlayerProvider = ({ children }) => {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           audioContextRef.current.resume();
         }
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
       }
     }
   };
@@ -624,7 +624,7 @@ export const AudioPlayerProvider = ({ children }) => {
       audioRef.current.volume = clamped;
     }
     if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === 'function') {
-      try { ytPlayerRef.current.setVolume(clamped * 100); } catch {}
+      try { ytPlayerRef.current.setVolume(clamped * 100); } catch { }
     }
     if (clamped > 0 && isMuted) setIsMuted(false);
     storageService.saveSettings({ volume: clamped });
@@ -638,7 +638,7 @@ export const AudioPlayerProvider = ({ children }) => {
         audioRef.current.volume = vol;
       }
       if (ytPlayerRef.current && typeof ytPlayerRef.current.unMute === 'function') {
-        try { ytPlayerRef.current.unMute(); ytPlayerRef.current.setVolume(vol * 100); } catch {}
+        try { ytPlayerRef.current.unMute(); ytPlayerRef.current.setVolume(vol * 100); } catch { }
       }
       setIsMuted(false);
     } else {
@@ -646,7 +646,7 @@ export const AudioPlayerProvider = ({ children }) => {
         audioRef.current.muted = true;
       }
       if (ytPlayerRef.current && typeof ytPlayerRef.current.mute === 'function') {
-        try { ytPlayerRef.current.mute(); } catch {}
+        try { ytPlayerRef.current.mute(); } catch { }
       }
       setIsMuted(true);
     }
@@ -669,13 +669,31 @@ export const AudioPlayerProvider = ({ children }) => {
 
   // Queue Operations
   const addToQueue = (track) => {
-    setQueue(prev => [...prev, track]);
+    setQueue(prev => {
+      if (prev.length === 0) {
+        return [track];
+      }
+      const curIdx = currentIndexRef.current;
+      if (curIdx < 0) {
+        return [track, ...prev];
+      }
+      const clone = [...prev];
+      clone.splice(curIdx + 1, 0, track);
+      return clone;
+    });
   };
 
   const playNextInQueue = (track) => {
     setQueue(prev => {
+      if (prev.length === 0) {
+        return [track];
+      }
+      const curIdx = currentIndexRef.current;
+      if (curIdx < 0) {
+        return [track, ...prev];
+      }
       const clone = [...prev];
-      clone.splice(currentIndex + 1, 0, track);
+      clone.splice(curIdx + 1, 0, track);
       return clone;
     });
   };

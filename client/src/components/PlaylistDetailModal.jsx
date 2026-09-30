@@ -370,6 +370,8 @@ export default function PlaylistDetailModal({ playlist, onClose, onUpdate }) {
                   index={i}
                   trackList={currentPlaylist.tracks}
                   onRemove={handleRemoveTrack}
+                  showLike={false}
+                  showAddToPlaylist={false}
                 />
               ))}
             </div>

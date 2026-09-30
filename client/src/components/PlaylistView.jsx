@@ -608,6 +608,8 @@ export default function PlaylistView({ playlist, onBack, onPlaylistUpdate, onPla
                 isLast={i === currentPlaylist.tracks.length - 1}
                 onDragStartRow={handleDragStartRow}
                 onDropRow={handleDropRow}
+                showLike={false}
+                showAddToPlaylist={false}
               />
             ))}
           </div>

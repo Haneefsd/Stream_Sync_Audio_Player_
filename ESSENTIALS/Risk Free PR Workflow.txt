@@ -29,5 +29,9 @@ git branch -d feature/your-task-name       # local
 git push origin --delete feature/your-task-name  # remote
 
 
+# 9. Delete the Last Commit if push is Wrongly Done or Unwanted in Main
+
+git reset --hard <COMMIT-ID>  # copy the previous commit hash
+git push origin main --force  # push the changes
 
 

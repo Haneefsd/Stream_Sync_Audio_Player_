@@ -14,7 +14,9 @@ export default function TrackRow({
   isLast = false,
   onDragStartRow = null,
   onDragOverRow = null,
-  onDropRow = null
+  onDropRow = null,
+  showLike = true,
+  showAddToPlaylist = true
 }) {
   const { currentTrack, isPlaying, playTrack, togglePlay, addToQueue, openAddToPlaylist } = useAudioPlayer();
   const [isLiked, setIsLiked] = useState(storageService.isFavorite(track.id));
@@ -130,21 +132,25 @@ export default function TrackRow({
 
 
 
-        <button
-          onClick={handleLikeToggle}
-          style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '2px' }}
-          title={isLiked ? 'Unlike' : 'Like'}
-        >
-          <Heart size={15} fill={isLiked ? 'var(--accent-indigo)' : 'none'} />
-        </button>
+        {showLike && (
+          <button
+            onClick={handleLikeToggle}
+            style={{ color: isLiked ? 'var(--accent-indigo)' : 'var(--text-muted)', padding: '2px' }}
+            title={isLiked ? 'Unlike' : 'Like'}
+          >
+            <Heart size={15} fill={isLiked ? 'var(--accent-indigo)' : 'none'} />
+          </button>
+        )}
 
-        <button
-          onClick={handleAddToPlaylist}
-          style={{ color: 'var(--text-muted)', padding: '2px' }}
-          title="Add to Playlist"
-        >
-          <FolderPlus size={15} />
-        </button>
+        {showAddToPlaylist && (
+          <button
+            onClick={handleAddToPlaylist}
+            style={{ color: 'var(--text-muted)', padding: '2px' }}
+            title="Add to Playlist"
+          >
+            <FolderPlus size={15} />
+          </button>
+        )}
 
         <button
           onClick={handleAddToQueue}

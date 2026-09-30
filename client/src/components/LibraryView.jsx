@@ -466,7 +466,14 @@ export default function LibraryView({ onSelectPlaylist }) {
           {history.length > 0 ? (
             <div className="track-list glass-panel" style={{ padding: '0.75rem' }}>
               {history.slice(0, 20).map((track, i) => (
-                <TrackRow key={`${track.id}_${i}`} track={track} index={i} trackList={history} />
+                <TrackRow
+                  key={`${track.id}_${i}`}
+                  track={track}
+                  index={i}
+                  trackList={history}
+                  showLike={false}
+                  showAddToPlaylist={false}
+                />
               ))}
             </div>
           ) : (

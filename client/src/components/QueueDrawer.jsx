@@ -17,21 +17,22 @@ export default function QueueDrawer({ onClose }) {
 
   return (
     <div 
+      className="queue-drawer"
       style={{
         position: 'fixed',
-        top: 0,
+        top: 'var(--header-height)',
         right: 0,
         width: '380px',
         maxWidth: '100vw',
-        height: 'calc(100vh - var(--player-height))',
+        height: 'calc(100vh - var(--header-height) - var(--player-height))',
         background: 'var(--bg-glass-strong)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         borderLeft: '1px solid var(--border-subtle)',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 40,
-        padding: '1.5rem',
+        zIndex: 60,
+        padding: '1.25rem',
         boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
         animation: 'slideInRight 0.25s ease-out'
       }}
@@ -41,36 +42,72 @@ export default function QueueDrawer({ onClose }) {
           from { transform: translateX(100%); }
           to { transform: translateX(0); }
         }
+        @media (max-width: 768px) {
+          .queue-drawer {
+            width: 100vw !important;
+            height: calc(100vh - var(--header-height) - 60px) !important;
+          }
+        }
       `}</style>
 
       {/* Drawer Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <ListMusic size={20} color="var(--accent-emerald)" />
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Play Queue ({upNextList.length})</h2>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Play Queue ({upNextList.length})</h2>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
               {upNextList.length} {upNextList.length === 1 ? 'song' : 'songs'} to be played
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {queue.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {upNextList.length > 0 && (
             <button
               onClick={clearQueue}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
                 fontSize: '0.75rem',
+                fontWeight: 700,
                 color: '#ef4444',
-                padding: '0.3rem 0.6rem',
-                borderRadius: '4px'
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '0.3rem 0.75rem',
+                borderRadius: 'var(--radius-full)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
-              title="Clear Queue"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+              }}
+              title="Clear entire queue"
             >
-              Clear
+              <Trash2 size={13} />
+              <span>Clear</span>
             </button>
           )}
-          <button onClick={onClose} style={{ color: 'var(--text-muted)' }}>
+          <button 
+            onClick={onClose} 
+            style={{ 
+              color: 'var(--text-muted)', 
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: 'var(--radius-sm)'
+            }}
+            title="Close Queue"
+          >
             <X size={20} />
           </button>
         </div>
@@ -123,10 +160,6 @@ export default function QueueDrawer({ onClose }) {
 
         {/* Up Next List */}
         <div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Up Next ({upNextList.length} to be played)
-          </span>
-
           {upNextList.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.5rem' }}>
               {upNextList.map((track, i) => {
@@ -134,7 +167,7 @@ export default function QueueDrawer({ onClose }) {
                 return (
                   <div
                     key={`${track.id}_${actualIndex}`}
-                    onClick={() => playTrack(track)}
+                    onClick={() => playTrack(track, queue)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
