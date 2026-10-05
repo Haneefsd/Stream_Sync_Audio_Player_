@@ -40,12 +40,18 @@ export default function FullscreenPlayer({ onClose }) {
   const [activeTab, setActiveTab] = useState('visualizer'); // 'visualizer' | 'lyrics'
   const [lyricsData, setLyricsData] = useState(null);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
-  const [visualizerType, setVisualizerType] = useState('bars'); // 'bars' | 'wave' | 'circle'
 
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
   const lyricsContainerRef = useRef(null);
   const seekSliderRef = useRef(null);
+
+  // Smooth amplitude multiplier (1 when playing, 0 when paused) & animation state
+  const animAmpRef = useRef(isPlaying ? 1 : 0);
+  const phaseRef = useRef(0);
+  const smoothBassRef = useRef(0.5);
+  const smoothMidRef = useRef(0.5);
+  const smoothTrebleRef = useRef(0.5);
 
   // Fetch Lyrics on Track Change
   useEffect(() => {
@@ -68,8 +74,10 @@ export default function FullscreenPlayer({ onClose }) {
     return () => { isMounted = false; };
   }, [currentTrack]);
 
-  // Real-time Canvas Visualizer Loop
+  // Real-time Canvas Visualizer Loop: Intertwined Glowing Harmonic Waves
   useEffect(() => {
+    if (activeTab !== 'visualizer') return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -77,93 +85,200 @@ export default function FullscreenPlayer({ onClose }) {
 
     let bufferLength = 64;
     let dataArray = new Uint8Array(bufferLength);
+    let lastTime = performance.now();
 
-    const renderFrame = () => {
+    const renderFrame = (now) => {
       animationFrameRef.current = requestAnimationFrame(renderFrame);
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
 
       const width = canvas.width;
       const height = canvas.height;
+      const centerY = height / 2;
+
       ctx.clearRect(0, 0, width, height);
+
+      // Smooth amplitude transition: ease into waves when playing (1), ease into straight line when paused (0)
+      const targetAmp = isPlaying ? 1.0 : 0.0;
+      animAmpRef.current += (targetAmp - animAmpRef.current) * 0.09;
+      if (Math.abs(animAmpRef.current - targetAmp) < 0.002) {
+        animAmpRef.current = targetAmp;
+      }
+
+      // Continuous phase advancement
+      if (isPlaying || animAmpRef.current > 0.01) {
+        phaseRef.current += dt * 2.6;
+      }
+      const phase = phaseRef.current;
+      const currentAmp = animAmpRef.current;
+
+      // Extract frequency bins or synthesize lively audio dynamics
+      let targetBass = 0.5;
+      let targetMid = 0.5;
+      let targetTreble = 0.5;
 
       if (analyser && isPlaying) {
         bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
 
-        let maxVal = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          if (dataArray[i] > maxVal) maxVal = dataArray[i];
-        }
+        let sumBass = 0, countBass = 0;
+        let sumMid = 0, countMid = 0;
+        let sumTreble = 0, countTreble = 0;
 
-        // If audio stream is silent or running on carrier audio in fallback mode, synthesize energetic waves
-        if (maxVal < 8) {
-          const t = Date.now() * 0.004;
-          for (let i = 0; i < dataArray.length; i++) {
-            const beat = Math.sin(t + i * 0.25) * 55 + Math.cos(t * 1.5 + i * 0.15) * 45 + 110;
-            dataArray[i] = Math.max(15, Math.min(235, beat));
+        const maxIdx = Math.min(bufferLength, 64);
+        for (let i = 0; i < maxIdx; i++) {
+          const val = dataArray[i] / 255;
+          if (i < 8) {
+            sumBass += val;
+            countBass++;
+          } else if (i < 24) {
+            sumMid += val;
+            countMid++;
+          } else {
+            sumTreble += val;
+            countTreble++;
           }
         }
-      } else {
-        // Fallback gentle idle wave when paused or unattached
-        for (let i = 0; i < dataArray.length; i++) {
-          dataArray[i] = Math.max(10, Math.sin(Date.now() * 0.003 + i * 0.2) * 20 + 25);
+
+        const rawBass = countBass ? sumBass / countBass : 0;
+        const rawMid = countMid ? sumMid / countMid : 0;
+        const rawTreble = countTreble ? sumTreble / countTreble : 0;
+
+        if (rawBass > 0.02 || rawMid > 0.02 || rawTreble > 0.02) {
+          targetBass = 0.35 + rawBass * 1.1;
+          targetMid = 0.35 + rawMid * 1.1;
+          targetTreble = 0.35 + rawTreble * 1.1;
+        } else {
+          // Synthetic audio rhythm in headless/carrier fallback mode
+          targetBass = 0.55 + 0.32 * Math.sin(phase * 0.9);
+          targetMid = 0.52 + 0.34 * Math.sin(phase * 1.25 + 1.2);
+          targetTreble = 0.5 + 0.3 * Math.cos(phase * 1.55 + 2.2);
         }
+      } else if (isPlaying) {
+        targetBass = 0.55 + 0.32 * Math.sin(phase * 0.9);
+        targetMid = 0.52 + 0.34 * Math.sin(phase * 1.25 + 1.2);
+        targetTreble = 0.5 + 0.3 * Math.cos(phase * 1.55 + 2.2);
       }
 
-      if (visualizerType === 'bars') {
-        const barWidth = (width / bufferLength) * 2.2;
-        let x = 0;
+      // Smooth audio dynamics
+      smoothBassRef.current += (targetBass - smoothBassRef.current) * 0.15;
+      smoothMidRef.current += (targetMid - smoothMidRef.current) * 0.15;
+      smoothTrebleRef.current += (targetTreble - smoothTrebleRef.current) * 0.15;
 
-        for (let i = 0; i < bufferLength; i++) {
-          const barHeight = (dataArray[i] / 255) * height * 0.85;
+      const bassAmp = smoothBassRef.current;
+      const midAmp = smoothMidRef.current;
+      const trebleAmp = smoothTrebleRef.current;
 
-          const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height);
-          gradient.addColorStop(0, '#10b981');
-          gradient.addColorStop(0.5, '#06b6d4');
-          gradient.addColorStop(1, 'rgba(139, 92, 246, 0.4)');
+      const baseMaxAmp = height * 0.18;
 
-          ctx.fillStyle = gradient;
-          ctx.fillRect(x, height - barHeight, barWidth - 3, barHeight);
+      // WHEN PAUSED (currentAmp === 0): Show the straight glowing line
+      if (currentAmp === 0) {
+        ctx.save();
+        ctx.lineWidth = 2.4;
 
-          x += barWidth;
-        }
-      } else if (visualizerType === 'wave') {
-        ctx.lineWidth = 3;
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        gradient.addColorStop(0, '#10b981');
-        gradient.addColorStop(0.5, '#06b6d4');
-        gradient.addColorStop(1, '#6366f1');
-        ctx.strokeStyle = gradient;
+        const straightGrad = ctx.createLinearGradient(0, 0, width, 0);
+        straightGrad.addColorStop(0, 'rgba(168, 85, 247, 0.35)');
+        straightGrad.addColorStop(0.2, 'rgba(6, 182, 212, 0.85)');
+        straightGrad.addColorStop(0.5, 'rgba(16, 185, 129, 0.95)');
+        straightGrad.addColorStop(0.8, 'rgba(6, 182, 212, 0.85)');
+        straightGrad.addColorStop(1, 'rgba(168, 85, 247, 0.35)');
+
+        ctx.strokeStyle = straightGrad;
+        ctx.shadowColor = 'rgba(6, 182, 212, 0.85)';
+        ctx.shadowBlur = 12;
         ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
 
-        const sliceWidth = width / bufferLength;
-        let x = 0;
+      // WHEN PLAYING (or transitioning): Render the 3 intertwined harmonic waves with generous vertical gaps!
+      // Notice: spreadGap separates the baseline of the top wave, middle wave, and bottom wave when playing!
+      const waves = [
+        {
+          // Emerald Green / Mint wave (Upper Tier)
+          color: '#10b981',
+          shadowColor: 'rgba(16, 185, 129, 0.95)',
+          shadowBlur: 12,
+          lineWidth: 2.2,
+          calcY: (normX, env, spreadGap) => {
+            const offset = -spreadGap;
+            const h1 = Math.sin(normX * 6.28 * 0.92 + phase * 0.95);
+            const h2 = Math.sin(normX * 6.28 * 1.95 - phase * 0.65 + 0.6);
+            return offset + (h1 * 0.72 + h2 * 0.28) * env * baseMaxAmp * bassAmp * currentAmp;
+          }
+        },
+        {
+          // Electric Cyan / Sky Blue wave (Center Tier)
+          color: '#06b6d4',
+          shadowColor: 'rgba(6, 182, 212, 0.95)',
+          shadowBlur: 14,
+          lineWidth: 2.4,
+          calcY: (normX, env, spreadGap) => {
+            const offset = 0;
+            const h1 = Math.sin(normX * 6.28 * 1.38 - phase * 1.15 + 1.7);
+            const h2 = Math.cos(normX * 6.28 * 2.45 + phase * 0.85);
+            return offset + (h1 * 0.68 + h2 * 0.32) * env * baseMaxAmp * midAmp * currentAmp;
+          }
+        },
+        {
+          // Neon Purple / Violet wave (Lower Tier)
+          color: '#a855f7',
+          shadowColor: 'rgba(168, 85, 247, 0.95)',
+          shadowBlur: 12,
+          lineWidth: 2.2,
+          calcY: (normX, env, spreadGap) => {
+            const offset = spreadGap;
+            const h1 = Math.sin(normX * 6.28 * 1.08 + phase * 0.82 + 3.14);
+            const h2 = Math.sin(normX * 6.28 * 2.75 - phase * 0.95 + 1.25);
+            return offset + (h1 * 0.65 + h2 * 0.35) * env * baseMaxAmp * trebleAmp * currentAmp;
+          }
+        }
+      ];
 
-        for (let i = 0; i < bufferLength; i++) {
-          const v = dataArray[i] / 255.0;
-          const y = height / 2 + (v - 0.5) * height * 0.8;
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
 
-          if (i === 0) {
+      const step = 2; // High precision sampling for silky curves
+      waves.forEach(w => {
+        ctx.beginPath();
+        ctx.strokeStyle = w.color;
+        ctx.shadowColor = w.shadowColor;
+        ctx.shadowBlur = w.shadowBlur;
+        ctx.lineWidth = w.lineWidth;
+
+        for (let x = 0; x <= width; x += step) {
+          const normX = x / width;
+          // Smooth Hann envelope: tapers to 0 at edges, peaks at center
+          const env = Math.pow(Math.sin(normX * Math.PI), 1.4);
+          // Vertical gap between adjacent tiers in the center
+          const spreadGap = height * 0.16 * env * currentAmp;
+          const y = centerY + w.calcY(normX, env, spreadGap);
+
+          if (x === 0) {
             ctx.moveTo(x, y);
           } else {
             ctx.lineTo(x, y);
           }
-          x += sliceWidth;
         }
-
-        ctx.lineTo(width, height / 2);
         ctx.stroke();
-      }
+      });
+
+      ctx.restore();
     };
 
-    renderFrame();
+    animationFrameRef.current = requestAnimationFrame(renderFrame);
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, visualizerType, analyserRef]);
+  }, [isPlaying, activeTab, analyserRef]);
 
   // Autoscroll Synced Lyrics
   useEffect(() => {
@@ -333,14 +448,8 @@ export default function FullscreenPlayer({ onClose }) {
             <div
               className="fullscreen-vinyl-disc"
               style={{
-                position: 'relative',
-                aspectRatio: '1 / 1',
-                flexShrink: 0,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 35px var(--accent-emerald-glow)',
-                border: '5px solid #081d53ff',
-                animation: isPlaying ? 'spin 18s linear infinite' : 'none'
+                animation: 'spin 20s linear infinite',
+                animationPlayState: isPlaying ? 'running' : 'paused'
               }}
             >
               <style>{`
@@ -358,15 +467,16 @@ export default function FullscreenPlayer({ onClose }) {
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '50px',
-                height: '50px',
+                width: '48px',
+                height: '48px',
                 background: '#07090e',
-                border: '3px solid #fff',
+                border: '2.5px solid rgba(255, 255, 255, 0.9)',
                 borderRadius: '50%',
                 transform: 'translate(-50%, -50%)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                boxShadow: '0 0 15px rgba(0, 0, 0, 0.9), inset 0 0 10px rgba(0, 0, 0, 0.95)'
               }}>
                 <Disc size={20} color="var(--accent-emerald)" />
               </div>
@@ -376,8 +486,8 @@ export default function FullscreenPlayer({ onClose }) {
             <div className="fullscreen-spectrum-canvas-container" style={{ width: '100%', position: 'relative', flexShrink: 0 }}>
               <canvas
                 ref={canvasRef}
-                width={720}
-                height={90}
+                width={850}
+                height={120}
                 style={{ width: '100%', height: '100%' }}
               />
             </div>

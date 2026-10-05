@@ -703,7 +703,7 @@ input {
 .fullscreen-player-container {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, #0e1526 0%, #03060f 100%);
+  background: radial-gradient(circle at 50% 35%, #0e172a 0%, #060b17 55%, #020409 100%);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -713,13 +713,51 @@ input {
 }
 
 .fullscreen-vinyl-disc {
-  width: min(36vh, 310px);
-  height: min(36vh, 310px);
+  width: min(34vh, 290px);
+  height: min(34vh, 290px);
+  position: relative;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 
+    0 25px 65px rgba(0, 0, 0, 0.92), 
+    0 0 45px rgba(16, 185, 129, 0.35),
+    0 0 90px rgba(6, 182, 212, 0.2),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+  border: 4px solid rgba(13, 27, 56, 0.9);
+  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s ease;
+}
+
+.fullscreen-vinyl-disc:hover {
+  transform: scale(1.03);
+  box-shadow: 
+    0 30px 75px rgba(0, 0, 0, 0.95), 
+    0 0 55px rgba(16, 185, 129, 0.5),
+    0 0 110px rgba(6, 182, 212, 0.3);
 }
 
 .fullscreen-spectrum-canvas-container {
-  max-width: 720px;
-  height: 80px;
+  max-width: 780px;
+  height: 95px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.fullscreen-spectrum-canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.45)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
 }
 
 .fullscreen-track-title {
@@ -1118,8 +1156,12 @@ input {
   }
 
   .fullscreen-spectrum-canvas-container {
-    max-width: 280px !important;
-    height: 36px !important;
+    max-width: 300px !important;
+    height: 48px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
   }
 
   .fullscreen-track-title {
